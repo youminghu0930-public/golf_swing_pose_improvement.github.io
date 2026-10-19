@@ -53,6 +53,7 @@ export function prepareData(root = projectRoot, { probe = probeVideo, preview = 
     }
   }
   const snapshots = [];
+  const snapshotPoses = new Map();
   const configFile = path.join(root, 'data/poses/snapshot.json');
   if (fs.existsSync(configFile)) {
     try {
@@ -60,7 +61,15 @@ export function prepareData(root = projectRoot, { probe = probeVideo, preview = 
         const image = `data/.generated/${clip.key}-frame-${frame}.jpg`;
         try {
           ensurePreview(path.join(root, clip.video), path.join(root, image), frame);
-          snapshots.push({ key: `${clip.key}-${frame}`, image });
+          const snapshot = { key: `${clip.key}-${frame}`, image };
+          for (const side of ['before', 'after']) {
+            const file = clip.poses[side];
+            if (!snapshotPoses.has(file)) snapshotPoses.set(file, read(path.join(root, file)));
+            const pose = snapshotPoses.get(file);
+            // Only the displayed frame is sent to snapshot visitors, not the entire video prediction.
+            snapshot[side] = { joints: pose.joints, pred: [pose.pred[frame].slice(0, pose.joints.length)] };
+          }
+          snapshots.push(snapshot);
         } catch (error) { warn(`Snapshot preview ${clip.key}/${frame}: ${error.message}`); }
       }
     } catch (error) { warn(`Snapshot configuration: ${error.message}`); }

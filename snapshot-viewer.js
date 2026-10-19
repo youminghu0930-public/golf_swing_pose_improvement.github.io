@@ -61,30 +61,21 @@ function addShade(viewport, entry, side, id) {
 
 export async function mountSnapshots(root, copy) {
   const labels = copy.snapshots;
-  const json = async url => {
-    const response = await fetch(url, { cache: 'no-cache' });
+  const json = async (url, cache = 'default') => {
+    const response = await fetch(url, { cache });
     if (!response.ok) throw new Error(`${url}: ${response.status}`);
     return response.json();
   };
   const [config, manifest, credits] = await Promise.all([
-    json('data/poses/snapshot.json').catch(() => ({})), json('data/catalog.json'),
-    json('data/credits.json').catch(() => ({})),
+    json('data/poses/snapshot.json', 'no-cache').catch(() => ({})), json('data/catalog.json', 'no-cache'),
+    json('data/credits.json', 'no-cache').catch(() => ({})),
   ]);
   const poses = new Map();
-  const snapshots = (await Promise.all(snapshotItems(config, manifest.clips, { onWarning: message => console.warn(message) }).map(async ({ clip, frame, joints }) => {
-    try {
+  const snapshots = snapshotItems(config, manifest.clips, { onWarning: message => console.warn(message) }).map(({ clip, frame, joints }) => {
     const cached = manifest.snapshots?.find(entry => entry.key === `${clip.key}-${frame}`);
-    const entry = { ...clip, videoId: clip.id, frame, joints, image: cached?.image,
+    return { ...clip, videoId: clip.id, frame, joints, image: cached?.image, before: cached?.before, after: cached?.after,
       credit: credits[clip.key] ?? credits[clip.id] ?? credits[clip.id.split('-')[0]] ?? null };
-    for (const side of ['before', 'after']) {
-      const file = clip.poses[side];
-      if (!poses.has(file)) poses.set(file, json(file));
-      const pose = await poses.get(file);
-      entry[side] = { joints: pose.joints, pred: [pose.pred[frame]] };
-    }
-    return entry;
-    } catch (error) { console.warn(`Skipping snapshot ${clip.key}/${frame}:`, error); return null; }
-  }))).filter(Boolean);
+  });
   if (!snapshots.length) { root.replaceChildren(make('p', labels.empty)); return; }
   root.setAttribute('role', 'region');
   root.setAttribute('aria-label', labels.title);
@@ -97,6 +88,7 @@ export async function mountSnapshots(root, copy) {
     button.type = 'button'; button.title = label; button.setAttribute('aria-label', label);
     button.disabled = snapshots.length < 2;
   }
+  const loaders = [];
   const cards = snapshots.map((entry, index) => {
     const displayFrame = entry.frame + 1;
     const card = make('article', undefined, 'snapshot-card');
@@ -105,29 +97,58 @@ export async function mountSnapshots(root, copy) {
     header.append(make('strong', format(copy.clipLabel, { id: entry.videoId })), make('span', format(labels.frame, { frame: displayFrame })));
     const comparison = make('div', undefined, 'snapshot-comparison');
     const viewports = [], scenes = [], overlays = [], shades = [];
+    const images = [], errors = [];
+    let viewState = { zoom: 1, x: 0, y: 0 }, loading;
     for (const [side, viewIndex] of [['before', 0], ['after', 1]]) {
       const panel = make('div', undefined, 'comparison-panel');
       const heading = make('div', undefined, 'panel-heading');
       heading.append(make('strong', copy[side]), make('span', side === 'before' ? copy.beforeModel : copy.afterModel));
       const viewport = make('div', undefined, 'pose-viewport snapshot-image-window');
       const image = make('img');
-      if (entry.image) image.src = entry.image;
       image.width = entry.width; image.height = entry.height;
       image.alt = `${copy[side]} · ${format(labels.itemLabel, { video: entry.videoId, frame: displayFrame })}`;
-      image.draggable = false; image.decoding = 'async'; image.loading = index < 2 ? 'eager' : 'lazy';
+      image.draggable = false; image.decoding = 'async';
       const imageError = make('span', labels.imageError, 'snapshot-image-error'); imageError.hidden = true;
       image.addEventListener('error', () => { imageError.hidden = false; });
       const scene = make('div', undefined, 'pose-scene'); scene.append(image);
       viewport.append(scene, imageError);
-      const overlay = createPoseOverlay(viewport, viewIndex, copy, new Set(entry.joints.map(name => `joint:${name}`)), () => {});
-      overlay.setPose(entry[side], entry.width, entry.height); overlay.render(0);
-      shades.push(addShade(viewport, entry, side, `snapshot-mask-${index}-${side}`));
-      viewports.push(viewport); scenes.push(scene); overlays.push(overlay);
+      viewports.push(viewport); scenes.push(scene); images.push(image); errors.push(imageError);
       panel.append(heading, viewport); comparison.append(panel);
     }
     installLinkedView(viewports, scenes, state => {
+      viewState = state;
       overlays.forEach(overlay => overlay.setTransform(state));
       shades.forEach(update => update(state));
+    });
+    loaders.push(active => {
+      images.forEach(image => { image.fetchPriority = active ? 'high' : 'low'; });
+      if (loading) return loading;
+      loading = (async () => {
+        if (entry.image) images.forEach(image => { image.src = entry.image; });
+        // Stale catalogs/new manual selections only: load full poses for this card on demand.
+        await Promise.all(['before', 'after'].map(async side => {
+          if (entry[side]) return;
+          const file = entry.poses[side];
+          if (!poses.has(file)) poses.set(file, json(file));
+          const pose = await poses.get(file);
+          entry[side] = { joints: pose.joints, pred: [pose.pred[entry.frame]] };
+        }));
+        for (const [viewIndex, side] of ['before', 'after'].entries()) {
+          const overlay = createPoseOverlay(viewports[viewIndex], viewIndex, copy, new Set(entry.joints.map(name => `joint:${name}`)), () => {});
+          overlay.setPose(entry[side], entry.width, entry.height); overlay.render(0); overlay.setTransform(viewState);
+          overlays.push(overlay);
+          const updateShade = addShade(viewports[viewIndex], entry, side, `snapshot-mask-${index}-${side}`);
+          updateShade(viewState); shades.push(updateShade);
+        }
+        if (!entry.image) {
+          const image = await extractSnapshot(entry);
+          images.forEach(node => { node.src = image; });
+        }
+      })().catch(error => {
+        console.warn(`Snapshot ${entry.key}/${entry.frame}:`, error);
+        errors.forEach(node => { node.hidden = false; });
+      });
+      return loading;
     });
     card.append(header, comparison); stage.append(card);
     return card;
@@ -144,18 +165,6 @@ export async function mountSnapshots(root, copy) {
   const credit = make('p', undefined, 'snapshot-source');
   details.append(credit, make('p', copy.panZoomHint, 'keyboard-hint'), make('p', labels.inspectionHint, 'keyboard-hint'));
   root.replaceChildren(shell, dots, details);
-  // Keep decoding sequential and off the initial render path; both views share one image.
-  void (async () => {
-    for (const [index, entry] of snapshots.entries()) {
-      if (entry.image) continue;
-      try {
-        const image = await extractSnapshot(entry);
-        cards[index].querySelectorAll('img').forEach(node => { node.src = image; });
-      } catch {
-        cards[index].querySelectorAll('.snapshot-image-error').forEach(node => { node.hidden = false; });
-      }
-    }
-  })();
 
   const count = cards.length, step = Math.PI*2/count;
   let position = 0, target = 0, animation;
@@ -171,6 +180,12 @@ export async function mountSnapshots(root, copy) {
   }
   function updateSelection() {
     const index = modulo(target), entry = snapshots[index];
+    loaders[index](true);
+    // Give the active card first priority; warm up only its two immediate neighbors.
+    requestAnimationFrame(() => {
+      if (modulo(target) !== index || count < 2) return;
+      loaders[modulo(index-1)](false); loaders[modulo(index+1)](false);
+    });
     cards.forEach((card, i) => {
       card.setAttribute('aria-hidden', String(i !== index));
       card.inert = i !== index;
