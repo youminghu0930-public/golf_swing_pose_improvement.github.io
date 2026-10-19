@@ -144,6 +144,14 @@ export async function mountSnapshots(root, copy) {
           const image = await extractSnapshot(entry);
           images.forEach(node => { node.src = image; });
         }
+        // Let the first snapshot paint before the lower player competes for bandwidth.
+        let timeout;
+        try {
+          await Promise.race([
+            Promise.all(images.map(image => image.decode().catch(() => {}))),
+            new Promise(resolve => { timeout = setTimeout(resolve, 5000); }),
+          ]);
+        } finally { clearTimeout(timeout); }
       })().catch(error => {
         console.warn(`Snapshot ${entry.key}/${entry.frame}:`, error);
         errors.forEach(node => { node.hidden = false; });
@@ -221,4 +229,5 @@ export async function mountSnapshots(root, copy) {
   next.onclick = () => animate(target+1);
   const resize = new ResizeObserver(layout); resize.observe(stage); resize.observe(cards[0]);
   updateSelection(); layout();
+  await loaders[0](true);
 }

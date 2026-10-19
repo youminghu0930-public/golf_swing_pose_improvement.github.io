@@ -56,7 +56,7 @@ export async function mountViewer(root, copy) {
   const video = document.createElement('video');
   video.muted = true;
   video.playsInline = true;
-  video.preload = 'auto';
+  video.preload = 'metadata';
   // Keep a rendered decoder surface: display:none can suppress paused frame
   // presentation callbacks and leave drawImage reading the previous texture.
   video.className = 'video-decoder';
@@ -261,13 +261,14 @@ export async function mountViewer(root, copy) {
         video.removeEventListener('loadeddata', loaded); video.removeEventListener('error', failed);
         signal.removeEventListener('abort', aborted);
       };
-      const loaded = () => { cleanup(); resolve(); };
+      const loaded = () => { video.preload = 'metadata'; cleanup(); resolve(); };
       const failed = () => { cleanup(); reject(new Error('Video could not load')); };
       const aborted = () => { cleanup(); reject(new DOMException('Aborted', 'AbortError')); };
       video.addEventListener('loadeddata', loaded, { once: true });
       video.addEventListener('error', failed, { once: true });
       signal.addEventListener('abort', aborted, { once: true });
-      video.src = url; video.load();
+      // Fetch enough to present the first frame reliably, then stop aggressive preloading.
+      video.preload = 'auto'; video.src = url; video.load();
     }); }
     const mediaReady = (async () => {
       await loadVideo(clip.video);

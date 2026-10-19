@@ -5,11 +5,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { prepareData } from './prepare-data.mjs';
 
-const root = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
-const port = Number(process.argv[2] || 8001);
+const built = process.argv.includes('--dist');
+const root = path.resolve(fileURLToPath(new URL(built ? '../dist/' : '../', import.meta.url)));
+const port = Number(process.argv.slice(2).find(argument => /^\d+$/.test(argument)) || 8001);
 let dirty = true;
 fs.mkdirSync(path.join(root, 'data'), { recursive: true });
-fs.watch(path.join(root, 'data'), { recursive: true }, (_, filename) => {
+if (!built) fs.watch(path.join(root, 'data'), { recursive: true }, (_, filename) => {
   const file = String(filename || '');
   if (file !== 'catalog.json' && !file.startsWith('.generated')) dirty = true;
 });
@@ -20,7 +21,7 @@ http.createServer((request, response) => {
   try {
     const url = new URL(request.url, 'http://localhost');
     const relative = decodeURIComponent(url.pathname);
-    if (relative === '/data/catalog.json' && dirty) {
+    if (!built && relative === '/data/catalog.json' && dirty) {
       const catalog = prepareData(root);
       dirty = false;
       console.log(`Data refreshed: ${catalog.clips.length} videos, ${catalog.snapshots.length} snapshots.`);

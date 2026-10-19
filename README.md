@@ -37,7 +37,7 @@ In repository Settings → Pages, choose **GitHub Actions** as the build/deploym
 
 `data/` is no longer ignored. Only the data files actually committed and pushed are visible to the deployment build. Keep/remove whichever source clips you want before committing; the build scans that checkout, skips clips missing Before or After poses, and creates a fresh catalog. It does not use local ignored previews or the old `assets/` directory. Missing/invalid snapshot selections are skipped, so one removed clip does not break the others. Generated metadata/previews and `dist/` remain ignored.
 
-To check the same deployment build locally, run `node scripts/build-site.mjs`. It creates a clean `dist/` with the site, catalog, preview images, and the original video/pose files for valid pairs. No video re-encoding or duplication into `assets/` occurs. Keep browser-compatible MP4 codecs in the original videos; originals are not automatically remuxed. Large videos/pose JSON may load slower than the former optimized copies.
+To check the same deployment build locally, run `node scripts/build-site.mjs`, then `node scripts/serve.mjs --dist`. It creates a clean `dist/` with the site, catalog, preview images, and video/pose files for valid pairs. Videos with metadata at the end are losslessly remuxed in `dist/` at the same relative path, placing metadata first for fast startup. Video/audio packets are copied, not re-encoded: resolution, frame rate, and frame alignment are preserved. Original videos in `data/` and full pose JSON remain unchanged. Already-fast-start videos are copied as-is. No second set of videos is deployed under `assets/`. Keep browser-compatible MP4 codecs in the originals.
 
 ## Preparing the demo
 
@@ -59,7 +59,7 @@ node scripts/prepare-data.mjs
 
 The video list is data-driven: this command discovers camera-view folders and MP4 files under `data/vidoes/` and generates `data/catalog.json`. There is no video-ID list to maintain in JavaScript or content.json. Clips missing a required model's matching pose JSON are skipped with a warning. Camera filters are derived from the catalog; optional friendly view labels live in content.json. The GitHub workflow regenerates it automatically from the pushed data. Older `prepare-demo.mjs` and `prepare-snapshots.mjs` commands are compatibility aliases for this preparation step.
 
-The text page paints before demo initialization. Result shows its own loading message, and the player shows a separate loading overlay while a clip loads. The other sections and video list remain usable independently.
+The text page paints before demo initialization. Snapshots can initialize near the viewport; the video player waits until the first snapshot image is decoded (bounded to avoid blocking on a failed request) and the video section is actually visible. This avoids video downloads competing with the upper snapshots. The player fetches enough video data to present its first frame, then switches to metadata-only preloading until playback is requested. Result and player loading messages are independent of the text sections.
 
 The script probes actual decoded frame timestamps and creates small preview images. Original videos and pose files remain untouched and are used directly by the browser. Source pose folders are `data/poses/before/` and `data/poses/after/`, each containing camera-view subfolders. There is one fixed Before/After comparison. When exports contain extra unnamed points, the viewer uses only named points.
 

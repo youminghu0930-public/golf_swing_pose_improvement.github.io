@@ -64,12 +64,15 @@ async function renderPage() {
     }
     section.append(heading, body);
     if (content.demo) {
+      let snapshotReady = Promise.resolve();
       if (content.demo.snapshots) {
+        let resolveSnapshot;
+        snapshotReady = new Promise(resolve => { resolveSnapshot = resolve; });
         section.append(element('h3', content.demo.snapshots.title, 'result-subheading'));
         const snapshots = element('div', undefined, 'snapshot-demo');
         const loading = element('p', content.demo.snapshots.loading, 'demo-loading');
         loading.setAttribute('role', 'status'); snapshots.append(loading); section.append(snapshots);
-        demos.push({ demo: snapshots, copy: content.demo, modulePath: './snapshot-viewer.js', mount: 'mountSnapshots', error: content.demo.snapshots.error });
+        demos.push({ demo: snapshots, copy: content.demo, modulePath: './snapshot-viewer.js', mount: 'mountSnapshots', error: content.demo.snapshots.error, settled: resolveSnapshot, rootMargin: '400px' });
         section.append(element('h3', content.demo.videoTitle, 'result-subheading'));
       }
       const demo = element('div', undefined, 'demo');
@@ -77,7 +80,7 @@ async function renderPage() {
       loading.setAttribute('role', 'status');
       demo.append(loading);
       section.append(demo);
-      demos.push({ demo, copy: content.demo, modulePath: './viewer.js', mount: 'mountViewer', error: content.demo.error });
+      demos.push({ demo, copy: content.demo, modulePath: './viewer.js', mount: 'mountViewer', error: content.demo.error, after: snapshotReady, rootMargin: '0px' });
     }
     main.append(section);
   }
@@ -85,16 +88,18 @@ async function renderPage() {
   if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
   // Give the text page a complete paint before starting independent demo work.
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    for (const { demo, copy, modulePath, mount, error: errorText } of demos) {
-      const observer = new IntersectionObserver(entries => {
-        if (!entries.some(entry => entry.isIntersecting)) return;
-        observer.disconnect();
-        import(modulePath).then(module => module[mount](demo, copy)).catch(error => {
-          console.error(error);
-          demo.replaceChildren(element('p', errorText, 'demo-loading'));
-        });
-      }, { rootMargin: '400px' });
-      observer.observe(demo);
+    for (const { demo, copy, modulePath, mount, error: errorText, settled, after = Promise.resolve(), rootMargin } of demos) {
+      after.then(() => {
+        const observer = new IntersectionObserver(entries => {
+          if (!entries.some(entry => entry.isIntersecting)) return;
+          observer.disconnect();
+          import(modulePath).then(module => module[mount](demo, copy)).catch(error => {
+            console.error(error);
+            demo.replaceChildren(element('p', errorText, 'demo-loading'));
+          }).finally(() => settled?.());
+        }, { rootMargin });
+        observer.observe(demo);
+      });
     }
   }));
 }
