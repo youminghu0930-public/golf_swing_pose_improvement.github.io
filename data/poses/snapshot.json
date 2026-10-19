@@ -1,0 +1,62 @@
+{
+    "0003":{
+        "101":["left_wrist"]
+    },
+    "0004":{
+        "31": ["left_wrist"]
+    },
+    "0007":{
+        "44": ["left_wrist"]
+    },
+    "0009":{
+        "145": ["right_wrist"]
+    },
+    "0010":{
+        "31": ["left_wrist"]
+    },
+    "0011":{
+        "77": ["left_wrist"]
+    },
+    "0013":{
+        "266": ["left_wrist"]
+    },
+    "0016": {
+        "29": ["left_shoulder", "left_elbow", "left_wrist"]
+    },
+    "0017":{
+        "25": ["right_wrist"]
+    },
+    "0018":{
+        "199": ["left_elbow"]
+    },
+    "0019-1":{
+        "150": ["left_wrist"]
+    },
+    "0019-4":{
+        "138": ["left_wrist"]
+    },
+    "0019-5":{
+        "178": ["left_elbow"]
+    },
+    "0022-1":{
+        "37": ["left_shoulder", "left_elbow", "left_wrist"]
+    },
+    "0022-2":{
+        "108": ["left_shoulder", "left_elbow", "left_wrist"]
+    },
+    "0025-2":{
+        "70": ["left_shoulder", "left_elbow", "left_wrist"]
+    },
+    "0026-2":{
+        "99": ["left_shoulder", "left_elbow", "left_wrist"]
+    },
+    "0026-5":{
+        "104": ["right_shoulder"]
+    },
+    "0027":{
+        "130": ["right_elbow"]
+    },
+    "0030":{
+        "31": ["left_wrist"]
+    }
+}
