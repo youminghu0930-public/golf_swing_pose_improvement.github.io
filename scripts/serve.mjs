@@ -1,0 +1,50 @@
+// A local static server with byte-range support for browser video seeking.
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { prepareData } from './prepare-data.mjs';
+
+const root = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
+const port = Number(process.argv[2] || 8001);
+let dirty = true;
+fs.mkdirSync(path.join(root, 'data'), { recursive: true });
+fs.watch(path.join(root, 'data'), { recursive: true }, (_, filename) => {
+  const file = String(filename || '');
+  if (file !== 'catalog.json' && !file.startsWith('.generated')) dirty = true;
+});
+const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.mp4': 'video/mp4', '.jpg': 'image/jpeg' };
+http.createServer((request, response) => {
+  if (!['GET', 'HEAD'].includes(request.method)) { response.writeHead(405).end(); return; }
+  let filename;
+  try {
+    const url = new URL(request.url, 'http://localhost');
+    const relative = decodeURIComponent(url.pathname);
+    if (relative === '/data/catalog.json' && dirty) {
+      const catalog = prepareData(root);
+      dirty = false;
+      console.log(`Data refreshed: ${catalog.clips.length} videos, ${catalog.snapshots.length} snapshots.`);
+    }
+    filename = path.resolve(root, `.${relative.endsWith('/') ? `${relative}index.html` : relative}`);
+    if (!filename.startsWith(`${root}${path.sep}`) && filename !== path.join(root, 'index.html')) throw new Error('Invalid path');
+    if (!fs.statSync(filename).isFile()) throw new Error('Not a file');
+  } catch { response.writeHead(404).end(); return; }
+  const size = fs.statSync(filename).size;
+  const headers = { 'Content-Type': types[path.extname(filename).toLowerCase()] || 'application/octet-stream', 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-cache' };
+  let start = 0, end = size - 1;
+  if (request.headers.range) {
+    const match = /^bytes=(\d*)-(\d*)$/.exec(request.headers.range);
+    if (!match || (!match[1] && !match[2])) { response.writeHead(416, { 'Content-Range': `bytes */${size}` }).end(); return; }
+    start = match[1] ? Number(match[1]) : Math.max(0, size - Number(match[2]));
+    end = match[1] && match[2] ? Math.min(Number(match[2]), size - 1) : size - 1;
+    if (start > end || start >= size) { response.writeHead(416, { 'Content-Range': `bytes */${size}` }).end(); return; }
+    headers['Content-Range'] = `bytes ${start}-${end}/${size}`;
+  }
+  headers['Content-Length'] = Math.max(0, end - start + 1);
+  response.writeHead(request.headers.range ? 206 : 200, headers);
+  if (request.method === 'HEAD' || !size) { response.end(); return; }
+  const stream = fs.createReadStream(filename, { start, end });
+  stream.on('error', () => response.destroy());
+  response.on('close', () => stream.destroy());
+  stream.pipe(response);
+}).listen(port, '127.0.0.1', () => console.log(`Local: http://127.0.0.1:${port}`));

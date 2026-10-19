@@ -1,0 +1,4 @@
+data/catalog.json
+data/.generated/
+dist/
+.DS_Store

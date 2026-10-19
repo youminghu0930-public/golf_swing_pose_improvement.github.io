@@ -1,0 +1,156 @@
+{
+  "page": {
+    "title": "Accuracy improvement of golf swing pose estimation",
+    "description": "Bringing golf swing pose estimation closer to practical use through targeted dataset expansion and an efficient annotation workflow.",
+    "eyebrow": "Computer vision · Golf swing analysis",
+    "navigationLabel": "Project sections",
+    "footer": "Golf swing pose estimation"
+  },
+  "sections": [
+    {
+      "id": "goal",
+      "title": "Goal",
+      "paragraphs": [
+        "General-purpose pose estimation performs well on everyday poses. However, sport-specific movements—especially uncommon postures and occluded joints—can reduce accuracy below the level needed for practical use.",
+        "This project aims to bring golf swing pose estimation quality to a practical level."
+      ]
+    },
+    {
+      "id": "difficulty",
+      "title": "Difficulty",
+      "paragraphs": [
+        "We began by expanding our training dataset, based on the hypothesis that the training data distribution was a root cause of the model’s accuracy issues. Our observations suggested that the model did not generalize well to sport-specific movements.",
+        "In practice, annotating human poses in video is a massive workload. We had hundreds of videos, each containing hundreds of frames. Annotating every frame was not feasible in terms of either time or cost. We needed a smarter way to address this bottleneck."
+      ]
+    },
+    {
+      "id": "accomplishment",
+      "title": "Accomplishment",
+      "items": [
+        "I worked with the team to define a more objective video filtering standard, reducing the annotation workload by approximately two-thirds.",
+        "I managed an outsourced annotation team of around 10 people to complete the work.",
+        "I established annotation workflows and practical tips for faster labeling, and refined the definitions of several joints to make the process more efficient and less prone to human error.",
+        "We annotated approximately 480,000 joints across 30,000 frames in about two weeks, at a cost of around US$3,000.",
+        "Model accuracy: Developed during the YOLOv8 era, our improved model achieves accuracy comparable to YOLO26x in 2026 when joints are visible. It still outperforms YOLO26x when the torso occludes the arms, particularly during the follow-through in down-the-line swings and the transition in face-on swings.",
+        "Model efficiency: The model remains lightweight enough to run in real time on edge devices",
+        "The newly trained model automatically ignores distracting poses from people other than the golfer."
+      ],
+      "metrics": [
+        { "value": "≈ ⅔ reduced", "label": "Less annotation workload" },
+        { "value": "≈ 480k", "label": "Joints annotated" },
+        { "value": "≈ 30k", "label": "Frames annotated" },
+        { "value": "≈ 2 weeks", "label": "Annotation time" },
+        { "value": "≈ US$ 3,000", "label": "Annotation cost" }
+      ]
+    },
+    {
+      "id": "influence",
+      "title": "Influence",
+      
+      "subsections": [
+        {
+          "title": "Internal workflow",
+          "paragraphs": [
+            "While managing this project, I created tools and documented the workflows and lessons learned. If the company starts another round of annotation, future teams can build on this experience without spending time solving the same problems again. The documentation covers:"
+          ],
+          "items": [
+            "How to use the internal management tool to improve the efficiency of an outsourced annotation team.",
+            "Practical tips for making annotation faster and improving its quality.",
+            "The reasoning behind the joint definitions and the benefits of defining them this way."
+          ]
+        },
+        {
+          "title": "Production",
+          "paragraphs": ["For production, I created and delivered:"],
+          "items": [
+            "A standardized data pipeline to merge existing and newly annotated datasets for model training.",
+            "An architecture for model training, inference, and Core ML conversion.",
+            "Cross-functional collaboration with the iOS team to deploy the Core ML model in the end product."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "result",
+      "title": "Result",
+      "paragraphs": [],
+      "demo": {
+        "before": "Before",
+        "after": "After",
+        "beforeModel": "General-purpose model · YOLO26x",
+        "afterModel": "Golf-specific model",
+        "listTitle": "Swing videos",
+        "videoTitle": "Video comparison",
+        "snapshots": {
+          "title": "Snapshot highlights",
+          "inspectionHint": "Hover to inspect a joint or connection.",
+          "carousel": "carousel",
+          "loading": "Loading snapshot highlights…",
+          "empty": "No snapshots have been selected yet.",
+          "error": "Snapshot highlights could not be loaded. The video viewer is still available below.",
+          "imageError": "This snapshot image could not be loaded.",
+          "previous": "Previous snapshot",
+          "next": "Next snapshot",
+          "navigation": "Choose a snapshot",
+          "itemLabel": "Swing {video} · Frame {frame}",
+          "show": "Show swing {video}, frame {frame}",
+          "frame": "Frame {frame}",
+          "position": "{current} / {total} · Swing {video} · Frame {frame}",
+          "focus": "Focus: {joints}"
+        },
+        "creditLabel": "Video source:",
+        "creditLink": "Original Instagram post ↗",
+        "viewLabel": "Camera view",
+        "views": { "all": "All views", "face-on": "Face-on", "down-the-line": "Down the line" },
+        "clipLabel": "Swing {id}",
+        "videoCount": "{count} videos",
+        "frame": "Frame {current} / {total}",
+        "slider": "Video frame",
+        "start": "Jump to start",
+        "previous": "Previous frame",
+        "play": "Play",
+        "stop": "Stop",
+        "next": "Next frame",
+        "end": "Jump to end",
+        "loading": "Loading swing…",
+        "loadingDemo": "Loading the video demo…",
+        "loadingList": "Loading video list…",
+        "ready": "Ready",
+        "error": "This swing could not be loaded. Select a video to try again.",
+        "empty": "No videos available.",
+        "keyboard": "Space for plays or stops. Tap ← / → for one frame; hold to repeat.",
+        "inspectionHint": "Hover to inspect a joint or connection. Click to select single; Shift-click to select multiples.",
+        "panZoomLabel": "Linked pan and zoom",
+        "zoomIn": "Zoom in",
+        "zoomOut": "Zoom out",
+        "zoomLevel": "Zoom level",
+        "resetView": "Reset view",
+        "panZoomHint": "Scroll or pinch to zoom; drag to pan when zoomed in.",
+        "skeletonLabel": "{view} skeleton",
+        "featureLabel": "{view} · {feature}",
+        "connectionLabel": "{from} — {to}",
+        "jointNames": {
+          "nose": "Nose",
+          "atlas": "Atlas",
+          "top_head": "Top of head",
+          "left_eye": "Left eye",
+          "right_eye": "Right eye",
+          "left_ear": "Left ear",
+          "right_ear": "Right ear",
+          "left_shoulder": "Left shoulder",
+          "right_shoulder": "Right shoulder",
+          "left_elbow": "Left elbow",
+          "right_elbow": "Right elbow",
+          "left_wrist": "Left wrist",
+          "right_wrist": "Right wrist",
+          "left_hip": "Left hip",
+          "right_hip": "Right hip",
+          "left_knee": "Left knee",
+          "right_knee": "Right knee",
+          "left_ankle": "Left ankle",
+          "right_ankle": "Right ankle"
+        }
+      }
+    }
+  ]
+}
