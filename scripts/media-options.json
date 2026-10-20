@@ -1,5 +1,5 @@
 {
   "snapshotWebpQuality": 82,
-  "trialVideoKey": "face-on-0000",
-  "trialVideoCrf": 23
+  "compressVideos": true,
+  "videoCrf": 23
 }

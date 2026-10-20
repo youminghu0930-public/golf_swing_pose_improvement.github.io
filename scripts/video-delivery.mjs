@@ -8,7 +8,7 @@ export function videoTiming(file) {
     times: result.frames.map(frame => Number(frame.best_effort_timestamp_time)-start) };
 }
 
-export function encodeTrialVideo(source, destination, crf = 23) {
+export function encodeDeliveryVideo(source, destination, crf = 23) {
   if (!Number.isInteger(crf) || crf < 0 || crf > 51) throw new Error('Invalid H.264 CRF');
   const original = videoTiming(source);
   execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', source, '-map', '0:v:0', '-map', '0:a?',
@@ -18,6 +18,6 @@ export function encodeTrialVideo(source, destination, crf = 23) {
   const output = videoTiming(destination);
   const aligned = output.width === original.width && output.height === original.height && output.times.length === original.times.length
     && original.times.every((time, i) => Number.isFinite(time) && Math.abs(time-output.times[i]) < .00001);
-  if (!aligned) throw new Error('Trial rejected: resolution, frame count or frame timing changed');
-  return { originalBytes: fs.statSync(source).size, trialBytes: fs.statSync(destination).size, frames: output.times.length };
+  if (!aligned) throw new Error('Encoding rejected: resolution, frame count or frame timing changed');
+  return { originalBytes: fs.statSync(source).size, encodedBytes: fs.statSync(destination).size, frames: output.times.length };
 }
