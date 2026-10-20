@@ -31,3 +31,12 @@ export function spotlightPoints(pose, names) {
     return point && Number.isFinite(point[0]) && Number.isFinite(point[1]) && (point[2] === undefined || point[2] >= 0) && (point[0] !== 0 || point[1] !== 0) ? [point.slice(0, 2)] : [];
   });
 }
+
+export function snapshotFocus(entry) {
+  const average = points => ({ x: points.reduce((sum, point) => sum+point[0], 0)/points.length, y: points.reduce((sum, point) => sum+point[1], 0)/points.length });
+  const centers = ['before', 'after'].flatMap(side => {
+    const points = entry[side] ? spotlightPoints(entry[side], entry.joints) : [];
+    return points.length ? [average(points)] : [];
+  });
+  return centers.length ? average(centers.map(point => [point.x, point.y])) : null;
+}

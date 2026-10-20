@@ -9,6 +9,15 @@ export function constrainView(state) {
   return { zoom: state.zoom, x: Math.max(-limit, Math.min(limit, state.x)), y: Math.max(-limit, Math.min(limit, state.y)) };
 }
 
+export function focusedView({ point, width, height, viewportWidth, viewportHeight, zoom = 2 }) {
+  const scale = Math.min(viewportWidth/width, viewportHeight/height);
+  if (!point || !scale || !viewportWidth || !viewportHeight) return constrainView({ zoom, x: 0, y: 0 });
+  return constrainView({ zoom,
+    x: -(point.x-width/2)*scale*zoom/viewportWidth,
+    y: -(point.y-height/2)*scale*zoom/viewportHeight,
+  });
+}
+
 export function installLinkedView(viewports, scenes, onChange) {
   let state = { zoom: 1, x: 0, y: 0 };
   function apply(next) {
@@ -78,6 +87,7 @@ export function installLinkedView(viewports, scenes, onChange) {
   viewports.forEach(viewport => resize.observe(viewport));
   apply(state);
   return {
+    setView: next => apply(next),
     zoomBy: factor => apply(zoomView(state, state.zoom * factor)),
     reset: () => apply({ zoom: 1, x: 0, y: 0 })
   };

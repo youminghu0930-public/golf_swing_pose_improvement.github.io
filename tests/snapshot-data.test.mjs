@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { snapshotItems, spotlightPoints } from '../snapshot-data.js';
+import { snapshotItems, spotlightPoints, snapshotFocus } from '../snapshot-data.js';
 
 const clips = [{ id: '0000', key: 'face-on-0000', frameCount: 100 }, { id: '0001', key: 'face-on-0001', frameCount: 50 }];
 test('curated videos expand into ordered, zero-based frame entries', () => {
@@ -26,4 +26,16 @@ test('runtime tolerates removed clips and invalid frames without losing valid se
   const items = snapshotItems({ removed: { 0: ['nose'] }, '0000': { 0: ['nose'], 100: ['nose'], 2: [] } }, clips, { onWarning: message => warnings.push(message) });
   assert.deepEqual(items.map(item => item.frame), [0]);
   assert.equal(warnings.length, 3);
+});
+
+test('snapshot focus averages each view first so different visible joint counts have equal weight', () => {
+  const entry = { joints: ['a', 'b', 'c'], before: { joints: ['a', 'b', 'c'], pred: [[[10, 20], [30, 40], [50, 60]]] }, after: { joints: ['a'], pred: [[[90, 100]]] } };
+  assert.deepEqual(snapshotFocus(entry), { x: 60, y: 70 });
+});
+
+test('snapshot focus ignores unavailable points and falls back to the available view or image center', () => {
+  const entry = { joints: ['nose'], before: { joints: ['nose'], pred: [[[0, 0]]] }, after: { joints: ['nose'], pred: [[[30, 40]]] } };
+  assert.deepEqual(snapshotFocus(entry), { x: 30, y: 40 });
+  entry.after.pred = [[[30, 40, -1]]];
+  assert.equal(snapshotFocus(entry), null);
 });
