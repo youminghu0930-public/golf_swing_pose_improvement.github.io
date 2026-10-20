@@ -110,7 +110,7 @@ export async function mountSnapshots(root, copy) {
     return response.json();
   };
   const [config, manifest, credits] = await Promise.all([
-    json('materials/data/poses/snapshot.json', 'no-cache').catch(() => ({})), json('materials/data/catalog.json', 'no-cache'),
+    json('materials/data/poses/snapshot.json', 'no-cache').catch(() => ({})), readCatalog(),
     json('materials/data/credits.json', 'no-cache').catch(() => ({})),
   ]);
   const poses = new Map();
@@ -287,10 +287,10 @@ export async function mountSnapshots(root, copy) {
     const index = modulo(target), entry = snapshots[index];
     loaders[index](true);
     // Give the active card first priority; warm up only its two immediate neighbors.
-    requestAnimationFrame(() => {
+    loaders[index](true).then(() => setTimeout(() => {
       if (modulo(target) !== index || count < 2) return;
       loaders[modulo(index-1)](false); loaders[modulo(index+1)](false);
-    });
+    }, 500));
     cards.forEach((card, i) => {
       card.setAttribute('aria-hidden', String(i !== index));
       card.inert = i !== index;
@@ -360,3 +360,4 @@ export async function mountSnapshots(root, copy) {
   updateSelection(); resizeLayout();
   await loaders[0](true);
 }
+import { readCatalog } from './catalog.js';

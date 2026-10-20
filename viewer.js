@@ -3,6 +3,7 @@ import { createPoseOverlay } from './pose-overlay.js';
 import { installFrameKeys } from './frame-keys.js';
 import { installLinkedView } from './linked-view.js';
 import { comparisonLabels } from './model-labels.js';
+import { readCatalog } from './catalog.js';
 const make = (tag, text, className) => {
   const node = document.createElement(tag);
   if (text !== undefined) node.textContent = text;
@@ -31,7 +32,7 @@ async function readJSON(url, signal, cache = 'default') {
 }
 
 export async function mountViewer(root, copy) {
-  const catalog = await readJSON('materials/data/catalog.json', undefined, 'no-cache');
+  const catalog = await readCatalog();
   copy = { ...copy, ...comparisonLabels(copy, catalog.models) };
   const player = make('div', undefined, 'comparison-player');
   player.tabIndex = 0;
@@ -367,7 +368,7 @@ export async function mountViewer(root, copy) {
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
   setEnabled(false);
   try {
-    ({ clips } = catalog);
+    clips = [...catalog.clips];
     // In All views, mix camera views by clip ID instead of grouping an entire
     // camera view ahead of the other one.
     clips.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }) || a.view.localeCompare(b.view));

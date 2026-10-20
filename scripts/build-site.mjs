@@ -55,7 +55,10 @@ for (const file of files) {
   fs.mkdirSync(path.dirname(target), { recursive: true });
   if (encoded.has(file)) continue;
   if (videos.has(file)) remuxed += Number(writeFastStart(path.join(projectRoot, file), target));
-  else fs.copyFileSync(path.join(projectRoot, file), target);
+  else if (file.endsWith('.json')) {
+    // Strip formatting only: joint values and source files remain untouched.
+    fs.writeFileSync(target, JSON.stringify(JSON.parse(fs.readFileSync(path.join(projectRoot, file), 'utf8'))));
+  } else fs.copyFileSync(path.join(projectRoot, file), target);
 }
 fs.writeFileSync(path.join(destination, 'materials/data/catalog.json'), JSON.stringify(catalog));
 if (reports.length) {

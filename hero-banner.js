@@ -1,5 +1,6 @@
 import { createPoseOverlay } from './pose-overlay.js';
 import { comparisonLabels } from './model-labels.js';
+import { readCatalog } from './catalog.js';
 
 export function bannerFrameAt(times, time) {
   let low=0,high=times.length-1;
@@ -17,7 +18,7 @@ async function read(url) {
   return response.json();
 }
 export async function mountBanner(root, settings, copy) {
-  const catalog=await read('materials/data/catalog.json');
+  const catalog=await readCatalog();
   const clip=bannerClip(catalog.clips,settings.video);
   if(!clip) { root.hidden=true; console.warn(`Banner clip not found or ambiguous: ${settings.video}`); return; }
   const asset=catalog.banner?.key===clip.key ? catalog.banner : null;
