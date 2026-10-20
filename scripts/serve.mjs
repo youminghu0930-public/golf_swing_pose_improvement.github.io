@@ -7,10 +7,14 @@ import { prepareData } from './prepare-data.mjs';
 
 const built = process.argv.includes('--dist');
 const root = path.resolve(fileURLToPath(new URL(built ? '../dist/' : '../', import.meta.url)));
+if (built && !fs.existsSync(path.join(root, 'index.html'))) {
+  console.error('Run node scripts/build-site.mjs before previewing dist/.');
+  process.exit(1);
+}
 const port = Number(process.argv.slice(2).find(argument => /^\d+$/.test(argument)) || 8001);
 let dirty = true;
-fs.mkdirSync(path.join(root, 'data'), { recursive: true });
-if (!built) fs.watch(path.join(root, 'data'), { recursive: true }, (_, filename) => {
+fs.mkdirSync(path.join(root, 'materials/data'), { recursive: true });
+if (!built) fs.watch(path.join(root, 'materials/data'), { recursive: true }, (_, filename) => {
   const file = String(filename || '');
   if (file !== 'catalog.json' && !file.startsWith('.generated')) dirty = true;
 });
@@ -21,7 +25,7 @@ http.createServer((request, response) => {
   try {
     const url = new URL(request.url, 'http://localhost');
     const relative = decodeURIComponent(url.pathname);
-    if (!built && relative === '/data/catalog.json' && dirty) {
+    if (!built && relative === '/materials/data/catalog.json' && dirty) {
       const catalog = prepareData(root);
       dirty = false;
       console.log(`Data refreshed: ${catalog.clips.length} videos, ${catalog.snapshots.length} snapshots.`);

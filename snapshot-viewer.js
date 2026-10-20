@@ -2,6 +2,7 @@ import { createPoseOverlay } from './pose-overlay.js';
 import { snapshotItems, spotlightPoints, snapshotFocus } from './snapshot-data.js';
 import { installLinkedView, focusedView } from './linked-view.js';
 import { overlayTransform } from './pose-geometry.js';
+import { comparisonLabels } from './model-labels.js';
 
 const make = (tag, text, className) => {
   const node = document.createElement(tag);
@@ -67,10 +68,11 @@ export async function mountSnapshots(root, copy) {
     return response.json();
   };
   const [config, manifest, credits] = await Promise.all([
-    json('data/poses/snapshot.json', 'no-cache').catch(() => ({})), json('data/catalog.json', 'no-cache'),
-    json('data/credits.json', 'no-cache').catch(() => ({})),
+    json('materials/data/poses/snapshot.json', 'no-cache').catch(() => ({})), json('materials/data/catalog.json', 'no-cache'),
+    json('materials/data/credits.json', 'no-cache').catch(() => ({})),
   ]);
   const poses = new Map();
+  copy = { ...copy, ...comparisonLabels(copy, manifest.models) };
   const snapshots = snapshotItems(config, manifest.clips, { onWarning: message => console.warn(message) }).map(({ clip, frame, joints }) => {
     const cached = manifest.snapshots?.find(entry => entry.key === `${clip.key}-${frame}`);
     return { ...clip, videoId: clip.id, frame, joints, image: cached?.image, before: cached?.before, after: cached?.after,
@@ -102,7 +104,7 @@ export async function mountSnapshots(root, copy) {
     for (const [side, viewIndex] of [['before', 0], ['after', 1]]) {
       const panel = make('div', undefined, 'comparison-panel');
       const heading = make('div', undefined, 'panel-heading');
-      heading.append(make('strong', copy[side]), make('span', side === 'before' ? copy.beforeModel : copy.afterModel));
+      heading.append(make('strong', copy[side]));
       const viewport = make('div', undefined, 'pose-viewport snapshot-image-window');
       const image = make('img');
       image.width = entry.width; image.height = entry.height;

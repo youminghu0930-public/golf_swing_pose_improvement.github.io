@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { prepareData } from '../scripts/prepare-data.mjs';
+import { prepareData, discoverPoseModels } from '../scripts/prepare-data.mjs';
 
 test('catalog reflects actual files, preserves hyphens, and drops deleted/incomplete clips', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'golf-data-test-'));
@@ -15,28 +15,40 @@ test('catalog reflects actual files, preserves hyphens, and drops deleted/incomp
     preview: (_, target) => fs.writeFileSync(target, 'preview'), warn: () => {},
   };
   try {
-    write('data/vidoes/down-the-line/0019-1.MP4');
-    write('data/vidoes/down-the-line/incomplete.mp4');
-    for (const side of ['before', 'after']) write(`data/poses/${side}/down-the-line/0019-1.json`, JSON.stringify({ joints: ['nose'], pred: [[[1, 2]], [[3, 4]]] }));
-    write('data/poses/snapshot.json', JSON.stringify({ '0019-1': { 1: ['nose'], 100: ['nose'] }, removed: { 0: ['nose'] } }));
+    write('materials/data/vidoes/down-the-line/0019-1.MP4');
+    write('materials/data/vidoes/down-the-line/incomplete.mp4');
+    for (const side of ['yolo26x', 'golf_specific']) write(`materials/data/poses/${side}/down-the-line/0019-1.json`, JSON.stringify({ joints: ['nose'], pred: [[[1, 2]], [[3, 4]]] }));
+    write('materials/data/poses/snapshot.json', JSON.stringify({ '0019-1': { 1: ['nose'], 100: ['nose'] }, removed: { 0: ['nose'] } }));
     const first = prepareData(root, options);
     assert.equal(first.clips.length, 1);
     assert.equal(first.clips[0].id, '0019-1');
-    assert.equal(first.clips[0].video, 'data/vidoes/down-the-line/0019-1.MP4');
-    assert.equal(first.clips[0].poses.after, 'data/poses/after/down-the-line/0019-1.json');
+    assert.equal(first.clips[0].video, 'materials/data/vidoes/down-the-line/0019-1.MP4');
+    assert.deepEqual(first.models, { before: 'yolo26x', after: 'golf_specific' });
+    assert.equal(first.clips[0].poses.after, 'materials/data/poses/golf_specific/down-the-line/0019-1.json');
     assert.equal(first.clips[0].frameCount, 2);
     assert.equal(first.snapshots.length, 1);
     assert.match(first.snapshots[0].image, /0019-1-frame-1-[a-f0-9]{12}-q82\.webp$/);
     assert.deepEqual(first.snapshots[0].before, { joints: ['nose'], pred: [[[3, 4]]] });
     assert.deepEqual(first.snapshots[0].after, { joints: ['nose'], pred: [[[3, 4]]] });
     assert.equal(JSON.parse(fs.readFileSync(path.join(root, first.clips[0].poses.before))).pred.length, 2);
-    write('data/poses/before/down-the-line/0019-1.json', JSON.stringify({ joints: ['nose'], pred: [[[1, 2]], [[30, 40]]] }));
+    write('materials/data/poses/yolo26x/down-the-line/0019-1.json', JSON.stringify({ joints: ['nose'], pred: [[[1, 2]], [[30, 40]]] }));
     assert.deepEqual(prepareData(root, options).snapshots[0].before.pred, [[[30, 40]]]);
-    write('data/vidoes/down-the-line/0019-1.MP4', 'new video content');
+    write('materials/data/vidoes/down-the-line/0019-1.MP4', 'new video content');
     assert.notEqual(prepareData(root, options).snapshots[0].image, first.snapshots[0].image);
-    fs.unlinkSync(path.join(root, 'data/poses/after/down-the-line/0019-1.json'));
+    fs.unlinkSync(path.join(root, 'materials/data/poses/golf_specific/down-the-line/0019-1.json'));
     const second = prepareData(root, options);
-    assert.deepEqual(second, { clips: [], snapshots: [] });
-    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(root, 'data/catalog.json'))), second);
+    assert.deepEqual(second, { models: first.models, clips: [], snapshots: [] });
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(root, 'materials/data/catalog.json'))), second);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test('model discovery follows a renamed general-purpose folder and rejects ambiguous comparisons', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'golf-model-test-'));
+  try {
+    fs.mkdirSync(path.join(root, 'materials/data/poses/yolo26n'), { recursive: true });
+    fs.mkdirSync(path.join(root, 'materials/data/poses/golf_specific'));
+    assert.deepEqual(discoverPoseModels(root), { before: 'yolo26n', after: 'golf_specific' });
+    fs.mkdirSync(path.join(root, 'materials/data/poses/yolo26x'));
+    assert.throws(() => discoverPoseModels(root), /Keep one/);
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });

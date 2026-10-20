@@ -27,6 +27,7 @@ async function renderPage() {
   const demos = [];
   const hero = element('div', undefined, 'hero');
   hero.append(element('p', page.eyebrow, 'eyebrow'), element('h1', page.title));
+  if (page.role) hero.append(element('p', page.role, 'hero-role'));
   main.append(hero);
 
   for (const content of sections) {

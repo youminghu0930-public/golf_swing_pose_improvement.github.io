@@ -10,14 +10,22 @@ export const projectRoot = fileURLToPath(new URL('../', import.meta.url));
 const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
 const directories = directory => fs.existsSync(directory) ? fs.readdirSync(directory, { withFileTypes: true }).filter(e => e.isDirectory() && !e.name.startsWith('.')).map(e => e.name).sort() : [];
 
+export function discoverPoseModels(root) {
+  const folders = directories(path.join(root, 'materials/data/poses'));
+  const general = folders.filter(name => name !== 'golf_specific');
+  if (general.length > 1) throw new Error(`Keep one general-purpose model folder alongside golf_specific; found: ${general.join(', ')}`);
+  return { before: general[0] ?? null, after: folders.includes('golf_specific') ? 'golf_specific' : null };
+}
+
 export function prepareData(root = projectRoot, { probe = probeVideo, preview = makePreview, warn = console.warn } = {}) {
   const options = read(fileURLToPath(new URL('./media-options.json', import.meta.url)));
+  const models = discoverPoseModels(root);
   if (!Number.isInteger(options.snapshotWebpQuality) || options.snapshotWebpQuality < 0 || options.snapshotWebpQuality > 100) throw new Error('Snapshot WebP quality must be an integer from 0 to 100');
   for (const command of [probe === probeVideo && 'ffprobe', preview === makePreview && 'ffmpeg'].filter(Boolean)) {
     try { execFileSync(command, ['-version'], { stdio: 'ignore' }); }
     catch { throw new Error(`Install FFmpeg (including ${command}) before preparing data.`); }
   }
-  const generated = path.join(root, 'data/.generated');
+  const generated = path.join(root, 'materials/data/.generated');
   fs.mkdirSync(generated, { recursive: true });
   const cacheFile = path.join(generated, 'probe-cache.json');
   let oldCache = {};
@@ -27,14 +35,14 @@ export function prepareData(root = projectRoot, { probe = probeVideo, preview = 
     if (!fs.existsSync(destination) || fs.statSync(destination).mtimeMs < fs.statSync(source).mtimeMs) preview(source, destination, frame);
   };
   const clips = [];
-  for (const view of directories(path.join(root, 'data/vidoes'))) {
-    const folder = path.join(root, 'data/vidoes', view);
+  for (const view of directories(path.join(root, 'materials/data/vidoes'))) {
+    const folder = path.join(root, 'materials/data/vidoes', view);
     for (const filename of fs.readdirSync(folder).filter(name => /\.mp4$/i.test(name)).sort()) {
       const id = path.parse(filename).name, key = `${view}-${id}`;
-      const video = `data/vidoes/${view}/${filename}`;
-      const poses = Object.fromEntries(['before', 'after'].map(side => [side, `data/poses/${side}/${view}/${id}.json`]));
-      if (Object.values(poses).some(file => !fs.existsSync(path.join(root, file)))) {
-        warn(`Skipping ${key}: missing Before or After poses.`); continue;
+      const video = `materials/data/vidoes/${view}/${filename}`;
+      const poses = Object.fromEntries(['before', 'after'].map(side => [side, `materials/data/poses/${models[side]}/${view}/${id}.json`]));
+      if (!models.before || !models.after || Object.values(poses).some(file => !fs.existsSync(path.join(root, file)))) {
+        warn(`Skipping ${key}: missing general-purpose or golf-specific poses.`); continue;
       }
       try {
         const counts = Object.values(poses).map(file => {
@@ -50,7 +58,7 @@ export function prepareData(root = projectRoot, { probe = probeVideo, preview = 
         cache[video] = { signature, metadata, hash };
         const frameCount = Math.min(metadata.times.length, ...counts);
         if (!frameCount) throw new Error('No shared frames');
-        const thumbnail = `data/.generated/${key}-thumbnail.jpg`;
+        const thumbnail = `materials/data/.generated/${key}-thumbnail.jpg`;
         ensurePreview(source, path.join(root, thumbnail), null);
         clips.push({ id, key, view, video, poses, thumbnail, frameCount, videoFrameCount: metadata.times.length,
           poseFrameCounts: counts, width: metadata.width, height: metadata.height, times: metadata.times.slice(0, frameCount) });
@@ -59,12 +67,12 @@ export function prepareData(root = projectRoot, { probe = probeVideo, preview = 
   }
   const snapshots = [];
   const snapshotPoses = new Map();
-  const configFile = path.join(root, 'data/poses/snapshot.json');
+  const configFile = path.join(root, 'materials/data/poses/snapshot.json');
   if (fs.existsSync(configFile)) {
     try {
       for (const { clip, frame } of snapshotItems(read(configFile), clips, { onWarning: warn })) {
         const hash = cache[clip.video].hash;
-        const image = `data/.generated/${clip.key}-frame-${frame}-${hash}-q${options.snapshotWebpQuality}.webp`;
+        const image = `materials/data/.generated/${clip.key}-frame-${frame}-${hash}-q${options.snapshotWebpQuality}.webp`;
         try {
           if (!fs.existsSync(path.join(root, image))) preview(path.join(root, clip.video), path.join(root, image), frame, options.snapshotWebpQuality);
           const snapshot = { key: `${clip.key}-${frame}`, image };
@@ -80,8 +88,8 @@ export function prepareData(root = projectRoot, { probe = probeVideo, preview = 
       }
     } catch (error) { warn(`Snapshot configuration: ${error.message}`); }
   }
-  const catalog = { clips, snapshots };
-  fs.writeFileSync(path.join(root, 'data/catalog.json'), JSON.stringify(catalog));
+  const catalog = { models, clips, snapshots };
+  fs.writeFileSync(path.join(root, 'materials/data/catalog.json'), JSON.stringify(catalog));
   fs.writeFileSync(cacheFile, JSON.stringify(cache));
   return catalog;
 }
@@ -102,5 +110,5 @@ function makePreview(source, destination, frame, quality = 82) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const catalog = prepareData();
-  console.log(`Indexed ${catalog.clips.length} videos and ${catalog.snapshots.length} snapshots directly from data/.`);
+  console.log(`Indexed ${catalog.clips.length} videos and ${catalog.snapshots.length} snapshots directly from materials/data/.`);
 }

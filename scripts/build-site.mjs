@@ -5,6 +5,7 @@ import { prepareData, projectRoot } from './prepare-data.mjs';
 import { writeFastStart } from './faststart.mjs';
 import { createHash } from 'node:crypto';
 import { encodeDeliveryVideo } from './video-delivery.mjs';
+import { siteFiles } from './site-files.mjs';
 
 const catalog = prepareData();
 const destination = path.join(projectRoot, 'dist');
@@ -19,7 +20,7 @@ if (options.compressVideos) {
     const source = path.join(projectRoot, clip.video);
     const originalBytes = fs.statSync(source).size;
     const hash = createHash('sha256').update(fs.readFileSync(source)).update(`h264-slow-crf${options.videoCrf}-v1`).digest('hex').slice(0, 12);
-    const relative = `data/.generated/videos/${clip.key}-${hash}.mp4`;
+    const relative = `materials/data/.generated/videos/${clip.key}-${hash}.mp4`;
     const cached = path.join(projectRoot, relative), reportFile = `${cached}.json`;
     fs.mkdirSync(path.dirname(cached), { recursive: true });
     try {
@@ -46,11 +47,7 @@ if (options.compressVideos) {
     }
   }
 }
-const files = new Set(['index.html', 'styles.css', '.nojekyll', 'data/catalog.json']);
-for (const filename of fs.readdirSync(projectRoot)) if (filename.endsWith('.js')) files.add(filename);
-for (const filename of ['data/credits.json', 'data/poses/snapshot.json']) if (fs.existsSync(path.join(projectRoot, filename))) files.add(filename);
-for (const clip of catalog.clips) for (const file of [clip.video, clip.thumbnail, ...Object.values(clip.poses)]) files.add(file);
-for (const snapshot of catalog.snapshots) files.add(snapshot.image);
+const files = siteFiles(projectRoot, catalog);
 const videos = new Set(catalog.clips.map(clip => clip.video));
 let remuxed = 0;
 for (const file of files) {
@@ -60,11 +57,10 @@ for (const file of files) {
   if (videos.has(file)) remuxed += Number(writeFastStart(path.join(projectRoot, file), target));
   else fs.copyFileSync(path.join(projectRoot, file), target);
 }
-fs.cpSync(path.join(projectRoot, 'materials'), path.join(destination, 'materials'), { recursive: true });
-fs.writeFileSync(path.join(destination, 'data/catalog.json'), JSON.stringify(catalog));
+fs.writeFileSync(path.join(destination, 'materials/data/catalog.json'), JSON.stringify(catalog));
 if (reports.length) {
   const totals = reports.reduce((sum, report) => ({ originalBytes: sum.originalBytes+report.originalBytes, deliveryBytes: sum.deliveryBytes+report.deliveryBytes }), { originalBytes: 0, deliveryBytes: 0 });
-  fs.writeFileSync(path.join(projectRoot, 'data/.generated/video-delivery-report.json'), JSON.stringify({ ...totals, clips: reports }, null, 2));
+  fs.writeFileSync(path.join(projectRoot, 'materials/data/.generated/video-delivery-report.json'), JSON.stringify({ ...totals, clips: reports }, null, 2));
   console.log(`Compressed ${encoded.size}/${catalog.clips.length} videos: ${totals.originalBytes} → ${totals.deliveryBytes} bytes; frame alignment verified.`);
 }
 console.log(`Built dist/ from ${catalog.clips.length} actual data clips; legacy assets excluded.`);

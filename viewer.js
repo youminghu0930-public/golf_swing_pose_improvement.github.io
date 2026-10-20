@@ -2,6 +2,7 @@ import { createFrameSeeker } from './frame-seeker.js';
 import { createPoseOverlay } from './pose-overlay.js';
 import { installFrameKeys } from './frame-keys.js';
 import { installLinkedView } from './linked-view.js';
+import { comparisonLabels } from './model-labels.js';
 const make = (tag, text, className) => {
   const node = document.createElement(tag);
   if (text !== undefined) node.textContent = text;
@@ -16,6 +17,8 @@ async function readJSON(url, signal, cache = 'default') {
 }
 
 export async function mountViewer(root, copy) {
+  const catalog = await readJSON('materials/data/catalog.json', undefined, 'no-cache');
+  copy = { ...copy, ...comparisonLabels(copy, catalog.models) };
   const player = make('div', undefined, 'comparison-player');
   player.tabIndex = 0;
   player.setAttribute('aria-label', `${copy.before} / ${copy.after}`);
@@ -26,10 +29,10 @@ export async function mountViewer(root, copy) {
   const selected = new Set();
   const overlays = [];
   const viewports = [], scenes = [];
-  for (const [label, model] of [[copy.before, copy.beforeModel], [copy.after, copy.afterModel]]) {
+  for (const label of [copy.before, copy.after]) {
     const panel = make('div', undefined, 'comparison-panel');
     const heading = make('div', undefined, 'panel-heading');
-    heading.append(make('strong', label), make('span', model));
+    heading.append(make('strong', label));
     const canvas = make('canvas');
     canvas.width = 360;
     canvas.height = 640;
@@ -135,7 +138,7 @@ export async function mountViewer(root, copy) {
     } catch (error) { console.warn('Invalid video credit URL', error); }
   }
   // Attribution loads independently and never delays the viewer or page content.
-  readJSON('data/credits.json', undefined, 'no-cache').then(data => {
+  readJSON('materials/data/credits.json', undefined, 'no-cache').then(data => {
     credits = data;
     if (active) renderCredit(active);
   }).catch(error => console.warn('Video credits could not load', error));
@@ -325,7 +328,7 @@ export async function mountViewer(root, copy) {
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
   setEnabled(false);
   try {
-    ({ clips } = await readJSON('data/catalog.json', undefined, 'no-cache'));
+    ({ clips } = catalog);
     // In All views, mix camera views by clip ID instead of grouping an entire
     // camera view ahead of the other one.
     clips.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }) || a.view.localeCompare(b.view));

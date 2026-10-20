@@ -1,4 +1,4 @@
-data/catalog.json
-data/.generated/
+materials/data/catalog.json
+materials/data/.generated/
 dist/
 .DS_Store
