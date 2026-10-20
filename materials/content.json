@@ -1,8 +1,9 @@
 {
   "page": {
-    "title": "Accuracy improvement of golf swing pose estimation",
+    "title": "Improving Golf Swing Pose Estimation",
     "description": "Bringing golf swing pose estimation closer to practical use through targeted dataset expansion and an efficient annotation workflow.",
     "eyebrow": "Computer vision · Golf swing analysis",
+    "role": "My role: I led annotation operations, developed the training and Core ML conversion pipeline, and collaborated with the iOS team on deployment.",
     "navigationLabel": "Project sections",
     "footer": "Golf swing pose estimation"
   },
@@ -11,74 +12,72 @@
       "id": "goal",
       "title": "Goal",
       "paragraphs": [
-        "General-purpose pose estimation performs well on everyday poses. However, sport-specific movements—especially uncommon postures and occluded joints—can reduce accuracy below the level needed for practical use.",
-        "This project aims to bring golf swing pose estimation quality to a practical level."
+        "General-purpose pose estimation can struggle with the unusual postures and joint occlusions found in golf swings. This project aimed to improve estimation reliability in these challenging positions while keeping the model lightweight enough for real-time use on mobile devices."
       ]
     },
     {
       "id": "difficulty",
-      "title": "Difficulty",
+      "title": "Challenges",
       "paragraphs": [
-        "We began by expanding our training dataset, based on the hypothesis that the training data distribution was a root cause of the model’s accuracy issues. Our observations suggested that the model did not generalize well to sport-specific movements.",
-        "In practice, annotating human poses in video is a massive workload. We had hundreds of videos, each containing hundreds of frames. Annotating every frame was not feasible in terms of either time or cost. We needed a smarter way to address this bottleneck."
+        "We suspected that underrepresentation of golf-specific poses in the training data contributed to these failures. Expanding the dataset was our starting point, but annotation itself became a major bottleneck.",
+        "Hundreds of videos, each containing hundreds of frames, made exhaustive annotation impractical in terms of time and cost. We needed to prioritize useful footage and make labeling more efficient while maintaining consistent joint definitions."
       ]
     },
     {
       "id": "accomplishment",
-      "title": "Accomplishment",
+      "title": "Contributions and Outcomes",
       "items": [
-        "I worked with the team to define a more objective video filtering standard, reducing the annotation workload by approximately two-thirds.",
-        "I managed an outsourced annotation team of around 10 people to complete the work.",
-        "I established annotation workflows and practical tips for faster labeling, and refined the definitions of several joints to make the process more efficient and less prone to human error.",
+        "I worked with the team to establish objective video selection criteria, reducing the annotation workload by approximately two-thirds.",
+        "I managed an outsourced annotation team of around 10 people, coordinating the labeling work through completion.",
+        "I developed practical labeling workflows and refined several joint definitions to improve annotation efficiency and reduce ambiguity.",
         "We annotated approximately 480,000 joints across 30,000 frames in about two weeks, at a cost of around US$3,000.",
-        "Model accuracy: Developed during the YOLOv8 era, our improved model achieves accuracy comparable to YOLO26x in 2026 when joints are visible. It still outperforms YOLO26x when the torso occludes the arms, particularly during the follow-through in down-the-line swings and the transition in face-on swings.",
-        "Model efficiency: The model remains lightweight enough to run in real time on edge devices. The computation complexity is close to YOLO nano model",
-        "The newly trained model automatically ignores distracting poses from people other than the golfer."
+        "Model quality: In the examples shown below, our golf-specific model produces results comparable to YOLO26x when joints are clearly visible, while handling several arm-occlusion cases more reliably. These include the follow-through in down-the-line swings and the transition in face-on swings. The model was originally developed during the YOLOv8 era.",
+        "Model efficiency: Designed for real-time inference on mobile devices, the model balances golf-specific accuracy with a lightweight architecture.",
+        "Golfer focus: The trained model can focus on the golfer while ignoring other people in the scene."
       ],
       "metrics": [
-        { "value": "≈ ⅔ reduced", "label": "Less annotation workload" },
+        { "value": "≈ 67%", "label": "Annotation workload reduction" },
         { "value": "≈ 480k", "label": "Joints annotated" },
         { "value": "≈ 30k", "label": "Frames annotated" },
         { "value": "≈ 2 weeks", "label": "Annotation time" },
-        { "value": "≈ US$ 3,000", "label": "Annotation cost" }
+        { "value": "≈ US$3,000", "label": "Annotation cost" }
       ]
     },
     {
       "id": "influence",
-      "title": "Influence",
+      "title": "Lasting Impact",
       
       "subsections": [
         {
-          "title": "Internal workflow",
+          "title": "Reusable annotation workflow",
           "paragraphs": [
-            "While managing this project, I created tools and documented the workflows and lessons learned. If the company starts another round of annotation, future teams can build on this experience without spending time solving the same problems again. The documentation covers:"
+            "I created tools and documented the workflows, joint definitions, and lessons learned so future annotation teams could build on this experience rather than solve the same problems again. The documentation covers:"
           ],
           "items": [
-            "How to use the internal management tool to improve the efficiency of an outsourced annotation team.",
-            "Practical tips for making annotation faster and improving its quality.",
-            "The reasoning behind the joint definitions and the benefits of defining them this way."
+            "Using the internal management tool to coordinate an outsourced annotation team more efficiently.",
+            "Practical labeling techniques for faster, more consistent annotation.",
+            "The reasoning behind the joint definitions and the benefits of each choice."
           ]
         },
         {
-          "title": "Production",
+          "title": "Production engineering",
           "paragraphs": ["For production, I created and delivered:"],
           "items": [
             "A standardized data pipeline to merge existing and newly annotated datasets for model training.",
-            "An architecture for model training, inference, and Core ML conversion.",
-            "Cross-functional collaboration with the iOS team to deploy the Core ML model in the end product."
+            "A reusable workflow for model training, inference, and Core ML conversion.",
+            "Cross-functional integration work with the iOS team to deploy the Core ML model in the product."
           ]
         }
       ]
     },
     {
       "id": "result",
-      "title": "Result",
+      "title": "Results",
       "paragraphs": [],
       "demo": {
-        "before": "Before",
-        "after": "After",
-        "beforeModel": "General-purpose model · YOLO26x",
-        "afterModel": "Golf-specific model",
+        "before": "General-purpose model",
+        "after": "Golf-specific model",
+        "modelTag": "{label} · {model}",
         "listTitle": "Swing videos",
         "videoTitle": "Video comparison",
         "snapshots": {
@@ -118,8 +117,8 @@
         "ready": "Ready",
         "error": "This swing could not be loaded. Select a video to try again.",
         "empty": "No videos available.",
-        "keyboard": "Space for plays or stops. Tap ← / → for one frame; hold to repeat.",
-        "inspectionHint": "Hover to inspect a joint or connection. Click to select single; Shift-click to select multiples.",
+        "keyboard": "Press Space to play or pause. Tap ← / → to step one frame; hold to repeat.",
+        "inspectionHint": "Hover to inspect a joint or connection. Click to select; Shift-click to select multiple joints or connections.",
         "panZoomLabel": "Linked pan and zoom",
         "zoomIn": "Zoom in",
         "zoomOut": "Zoom out",
