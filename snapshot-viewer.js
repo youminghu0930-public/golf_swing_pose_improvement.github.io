@@ -100,7 +100,7 @@ export async function mountSnapshots(root, copy) {
     const comparison = make('div', undefined, 'snapshot-comparison');
     const viewports = [], scenes = [], overlays = [], shades = [];
     const images = [], errors = [];
-    let viewState = { zoom: 1, x: 0, y: 0 }, loading;
+    let viewState = { zoom: 1, x: 0, y: 0 }, loading, focusReady = false, manuallyAdjusted = false;
     for (const [side, viewIndex] of [['before', 0], ['after', 1]]) {
       const panel = make('div', undefined, 'comparison-panel');
       panel.dataset.model = viewIndex === 0 ? 'general' : 'golf';
@@ -118,10 +118,15 @@ export async function mountSnapshots(root, copy) {
       viewports.push(viewport); scenes.push(scene); images.push(image); errors.push(imageError);
       panel.append(heading, viewport); comparison.append(panel);
     }
+    const defaultFocus = () => focusedView({ point: snapshotFocus(entry), width: entry.width, height: entry.height,
+      viewportWidth: viewports[0].clientWidth, viewportHeight: viewports[0].clientHeight, zoom: 2 });
     const linkedView = installLinkedView(viewports, scenes, state => {
       viewState = state;
       overlays.forEach(overlay => overlay.setTransform(state));
       shades.forEach(update => update(state));
+    }, {
+      resizeView: state => focusReady && !manuallyAdjusted ? defaultFocus() : state,
+      onInteraction: () => { manuallyAdjusted = true; },
     });
     loaders.push(active => {
       images.forEach(image => { image.fetchPriority = active ? 'high' : 'low'; });
@@ -136,8 +141,8 @@ export async function mountSnapshots(root, copy) {
           const pose = await poses.get(file);
           entry[side] = { joints: pose.joints, pred: [pose.pred[entry.frame]] };
         }));
-        linkedView.setView(focusedView({ point: snapshotFocus(entry), width: entry.width, height: entry.height,
-          viewportWidth: viewports[0].clientWidth, viewportHeight: viewports[0].clientHeight, zoom: 2 }));
+        focusReady = true;
+        linkedView.setView(defaultFocus());
         for (const [viewIndex, side] of ['before', 'after'].entries()) {
           const overlay = createPoseOverlay(viewports[viewIndex], viewIndex, copy, new Set(entry.joints.map(name => `joint:${name}`)), () => {});
           overlay.setPose(entry[side], entry.width, entry.height); overlay.render(0); overlay.setTransform(viewState);

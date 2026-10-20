@@ -18,7 +18,7 @@ export function focusedView({ point, width, height, viewportWidth, viewportHeigh
   });
 }
 
-export function installLinkedView(viewports, scenes, onChange) {
+export function installLinkedView(viewports, scenes, onChange, { resizeView, onInteraction } = {}) {
   let state = { zoom: 1, x: 0, y: 0 };
   function apply(next) {
     state = constrainView(next);
@@ -30,6 +30,7 @@ export function installLinkedView(viewports, scenes, onChange) {
     });
     onChange(state);
   }
+  function interact(next) { onInteraction?.(); apply(next); }
   for (const viewport of viewports) {
     const pointers = new Map();
     let moved = false, suppressClick = false;
@@ -37,11 +38,11 @@ export function installLinkedView(viewports, scenes, onChange) {
       const rect = viewport.getBoundingClientRect();
       return { x: (x - rect.left) / rect.width - .5, y: (y - rect.top) / rect.height - .5 };
     };
-    const pan = (dx, dy) => apply({ ...state, x: state.x + dx / viewport.clientWidth, y: state.y + dy / viewport.clientHeight });
+    const pan = (dx, dy) => interact({ ...state, x: state.x + dx / viewport.clientWidth, y: state.y + dy / viewport.clientHeight });
     viewport.addEventListener('wheel', event => {
       event.preventDefault();
       const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientHeight : 1);
-      apply(zoomView(state, state.zoom * Math.exp(-delta * .002), anchor(event.clientX, event.clientY)));
+      interact(zoomView(state, state.zoom * Math.exp(-delta * .002), anchor(event.clientX, event.clientY)));
     }, { passive: false });
     viewport.addEventListener('pointerdown', event => {
       if (event.pointerType === 'mouse' && event.button !== 0) return;
@@ -59,7 +60,7 @@ export function installLinkedView(viewports, scenes, onChange) {
         const midpoint = points => ({ x: (points[0].x + points[1].x) / 2, y: (points[0].y + points[1].y) / 2 });
         const distance = points => Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
         const before = midpoint(old), after = midpoint(current);
-        apply(zoomView(state, state.zoom * distance(current) / Math.max(1, distance(old)), anchor(before.x, before.y)));
+        interact(zoomView(state, state.zoom * distance(current) / Math.max(1, distance(old)), anchor(before.x, before.y)));
         pan(after.x - before.x, after.y - before.y);
         moved = true;
       } else if (state.zoom > 1 && (moved || Math.hypot(event.clientX - previous.startX, event.clientY - previous.startY) > 4)) {
@@ -83,12 +84,12 @@ export function installLinkedView(viewports, scenes, onChange) {
       if (suppressClick) { event.preventDefault(); event.stopImmediatePropagation(); }
     }, true);
   }
-  const resize = new ResizeObserver(() => apply(state));
+  const resize = new ResizeObserver(() => apply(resizeView?.(state) ?? state));
   viewports.forEach(viewport => resize.observe(viewport));
   apply(state);
   return {
     setView: next => apply(next),
-    zoomBy: factor => apply(zoomView(state, state.zoom * factor)),
-    reset: () => apply({ zoom: 1, x: 0, y: 0 })
+    zoomBy: factor => interact(zoomView(state, state.zoom * factor)),
+    reset: () => interact({ zoom: 1, x: 0, y: 0 })
   };
 }

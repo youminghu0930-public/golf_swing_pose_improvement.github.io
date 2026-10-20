@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { zoomView, constrainView, focusedView } from '../linked-view.js';
+import { zoomView, constrainView, focusedView, installLinkedView } from '../linked-view.js';
 
 test('zoom preserves the source point under the cursor', () => {
   const state = { zoom: 2, x: .1, y: -.15 }, anchor = { x: .3, y: -.2 };
@@ -31,4 +31,36 @@ test('snapshot framing keeps existing pan limits and defaults to image center wi
   const edge = focusedView({ point: { x: 0, y: 0 }, width: 720, height: 1280, viewportWidth: 408, viewportHeight: 440 });
   assert.equal(edge.y, .5);
   assert.ok(edge.x <= .5);
+});
+
+test('default snapshot focus is recalculated after mobile resize without overriding manual adjustments', () => {
+  const previousObserver = globalThis.ResizeObserver;
+  let resized;
+  globalThis.ResizeObserver = class {
+    constructor(callback) { resized = callback; }
+    observe() {}
+  };
+  try {
+    const viewport = new EventTarget();
+    Object.assign(viewport, { clientWidth: 408, clientHeight: 440, classList: { toggle() {} }, dataset: {} });
+    const scene = { style: {} }, point = { x: 400, y: 500 };
+    let state, manual = false;
+    const focus = () => focusedView({ point, width: 720, height: 1280,
+      viewportWidth: viewport.clientWidth, viewportHeight: viewport.clientHeight });
+    const view = installLinkedView([viewport], [scene], next => { state = next; }, {
+      resizeView: current => manual ? current : focus(),
+      onInteraction: () => { manual = true; },
+    });
+    view.setView(focus());
+    const desktop = state;
+    viewport.clientWidth = 134; viewport.clientHeight = 237;
+    resized();
+    assert.deepEqual(state, focus());
+    assert.notEqual(state.x, desktop.x, 'Mobile must not retain desktop letterbox offsets');
+    view.zoomBy(1.25);
+    const adjusted = state;
+    viewport.clientWidth = 408; viewport.clientHeight = 440;
+    resized();
+    assert.deepEqual(state, adjusted, 'Resizing must preserve manually adjusted framing');
+  } finally { globalThis.ResizeObserver = previousObserver; }
 });
