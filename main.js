@@ -23,14 +23,18 @@ async function renderPage() {
   navigationToggle.append(menuIcon);
   navigationToggle.type = 'button';
   const mobileNavigation = matchMedia('(max-width: 1000px)');
+  const backdrop = element('div', undefined, 'navigation-backdrop');
+  backdrop.setAttribute('aria-hidden', 'true');
   const setNavigation = expanded => {
     navigationToggle.setAttribute('aria-expanded', String(expanded));
     header.dataset.expanded = String(expanded);
     const menu = header.querySelector('nav');
     if (menu) menu.inert = !expanded;
+    backdrop.dataset.visible = String(expanded && mobileNavigation.matches);
   };
-  setNavigation(false);
-  mobileNavigation.addEventListener('change', () => setNavigation(false));
+  setNavigation(!mobileNavigation.matches);
+  mobileNavigation.addEventListener('change', () => setNavigation(!mobileNavigation.matches));
+  backdrop.addEventListener('click', () => setNavigation(false));
   navigationToggle.setAttribute('aria-controls', 'section-navigation');
   const nav = element('nav');
   nav.id = 'section-navigation';
@@ -52,10 +56,10 @@ async function renderPage() {
     nav.append(link);
   }
   navigationToggle.onclick = () => setNavigation(navigationToggle.getAttribute('aria-expanded') !== 'true');
-  header.addEventListener('keydown', event => {
+  document.addEventListener('keydown', event => {
     if (event.key === 'Escape') { setNavigation(false); navigationToggle.focus(); }
   });
-  header.append(navigationToggle, nav);
+  header.append(nav);
 
   const main = element('main');
   const demos = [];
@@ -137,7 +141,7 @@ async function renderPage() {
     }
     main.append(section);
   }
-  document.querySelector('#app').replaceChildren(header, main, element('footer', page.footer));
+  document.querySelector('#app').replaceChildren(backdrop, navigationToggle, header, main, element('footer', page.footer));
   if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
   // Give the text page a complete paint before starting independent demo work.
   requestAnimationFrame(() => requestAnimationFrame(() => {
