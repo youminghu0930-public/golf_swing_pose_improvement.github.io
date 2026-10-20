@@ -18,6 +18,7 @@ if (!built) fs.watch(path.join(root, 'materials/data'), { recursive: true }, (_,
   const file = String(filename || '');
   if (file !== 'catalog.json' && !file.startsWith('.generated')) dirty = true;
 });
+if (!built) fs.watch(path.join(root, 'materials/content.json'), () => { dirty = true; });
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.mp4': 'video/mp4', '.jpg': 'image/jpeg', '.webp': 'image/webp' };
 http.createServer((request, response) => {
   if (!['GET', 'HEAD'].includes(request.method)) { response.writeHead(405).end(); return; }

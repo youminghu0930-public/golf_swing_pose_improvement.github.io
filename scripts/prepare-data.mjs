@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { snapshotItems } from '../snapshot-data.js';
+import { prepareBanner } from './banner-assets.mjs';
 
 export const projectRoot = fileURLToPath(new URL('../', import.meta.url));
 const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -89,6 +90,10 @@ export function prepareData(root = projectRoot, { probe = probeVideo, preview = 
     } catch (error) { warn(`Snapshot configuration: ${error.message}`); }
   }
   const catalog = { models, clips, snapshots };
+  try {
+    const contentFile = path.join(root, 'materials/content.json');
+    if (fs.existsSync(contentFile)) catalog.banner = prepareBanner(root, clips, read(contentFile).page?.banner);
+  } catch (error) { warn(`Banner preview unavailable: ${error.message}`); }
   fs.writeFileSync(path.join(root, 'materials/data/catalog.json'), JSON.stringify(catalog));
   fs.writeFileSync(cacheFile, JSON.stringify(cache));
   return catalog;

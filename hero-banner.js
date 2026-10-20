@@ -20,6 +20,7 @@ export async function mountBanner(root, settings, copy) {
   const catalog=await read('materials/data/catalog.json');
   const clip=bannerClip(catalog.clips,settings.video);
   if(!clip) { root.hidden=true; console.warn(`Banner clip not found or ambiguous: ${settings.video}`); return; }
+  const asset=catalog.banner?.key===clip.key ? catalog.banner : null;
   copy={...copy,...comparisonLabels(copy,catalog.models)};
   const viewport=make('div','banner-viewport');
   const video=make('video','banner-video');
@@ -77,7 +78,14 @@ export async function mountBanner(root, settings, copy) {
       link.textContent=`${copy.creditLabel} ${copy.creditLink}`; credit.append(link);
     }catch { /* Attribution must not block the banner. */ }
   }).catch(()=>{});
-  const pose=await read(clip.poses.after);
+  // Do not download video/poses when opening directly at a lower section.
+  await new Promise(resolve=>{
+    const visibility=new IntersectionObserver(entries=>{
+      if(entries.some(entry=>entry.isIntersecting)) { visibility.disconnect(); resolve(); }
+    });
+    visibility.observe(root);
+  });
+  const pose=await read(asset?.pose??clip.poses.after);
   overlay.setPose(pose,clip.width,clip.height);fitOverlay(); loaded=true;
-  video.src=clip.video;video.load();draw(0);sync();
+  video.src=asset?.video??clip.video;video.load();draw(0);sync();
 }
