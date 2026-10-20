@@ -12,12 +12,12 @@ const make = (tag, text, className) => {
 const format = (text, values) => text.replace(/\{(\w+)\}/g, (_, key) => values[key]);
 function playbackIcon(button, key) {
   const paths = {
-    start: 'M5 4v16M19 5 8 12l11 7Z',
+    start: 'M3 4v16M12 6 5 12l7 6ZM21 6l-7 6 7 6Z',
     previous: 'M6 4v16M18 5 8 12l10 7Z',
     play: 'm8 5 11 7-11 7Z',
     stop: 'M6 6h12v12H6Z',
     next: 'M18 4v16M6 5l10 7-10 7Z',
-    end: 'M19 4v16M5 5l11 7-11 7Z',
+    end: 'M21 4v16M3 6l7 6-7 6ZM12 6l7 6-7 6Z',
   };
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true');
