@@ -31,6 +31,7 @@ export async function mountViewer(root, copy) {
   const viewports = [], scenes = [];
   for (const label of [copy.before, copy.after]) {
     const panel = make('div', undefined, 'comparison-panel');
+    panel.dataset.model = canvases.length === 0 ? 'general' : 'golf';
     const heading = make('div', undefined, 'panel-heading');
     heading.append(make('strong', label));
     const canvas = make('canvas');

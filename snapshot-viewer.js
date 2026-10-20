@@ -103,6 +103,7 @@ export async function mountSnapshots(root, copy) {
     let viewState = { zoom: 1, x: 0, y: 0 }, loading;
     for (const [side, viewIndex] of [['before', 0], ['after', 1]]) {
       const panel = make('div', undefined, 'comparison-panel');
+      panel.dataset.model = viewIndex === 0 ? 'general' : 'golf';
       const heading = make('div', undefined, 'panel-heading');
       heading.append(make('strong', copy[side]));
       const viewport = make('div', undefined, 'pose-viewport snapshot-image-window');
@@ -171,7 +172,7 @@ export async function mountSnapshots(root, copy) {
   const dotButtons = snapshots.map((entry, index) => {
     const button = make('button'); button.type = 'button';
     button.setAttribute('aria-label', format(labels.show, { video: entry.videoId, frame: entry.frame + 1 }));
-    button.append(make('span')); button.disabled = true; dots.append(button); return button;
+    button.append(make('span')); dots.append(button); return button;
   });
   const details = make('div', undefined, 'snapshot-details');
   const credit = make('p', undefined, 'snapshot-source');
@@ -231,6 +232,13 @@ export async function mountSnapshots(root, copy) {
   }
   previous.onclick = () => animate(target-1);
   next.onclick = () => animate(target+1);
+  dotButtons.forEach((button, index) => {
+    button.onclick = () => {
+      let distance = modulo(index - modulo(target));
+      if (distance > count / 2) distance -= count;
+      if (distance !== 0) animate(target + distance);
+    };
+  });
   const resize = new ResizeObserver(layout); resize.observe(stage); resize.observe(cards[0]);
   updateSelection(); layout();
   await loaders[0](true);
