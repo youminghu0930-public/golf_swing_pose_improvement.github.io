@@ -10,6 +10,10 @@ All project copy lives in **`materials/content.json`**: the browser title, descr
 
 `sections` controls the order of the page. Each section has a stable `id` for navigation and a `title`. It can include `paragraphs`, `items` (an ordered list), `metrics` (`value` and `label`), and `demo` (viewer labels).
 
+### Animated title banner
+
+Set `page.banner.video` in `materials/content.json` to a catalog clip key (for example, `face-on-0000` or `down-the-line-0005`). The banner automatically uses that clip's golf-specific prediction and its current delivery URL, including optimized videos in the deployed catalog. Source videos remain under `materials/data/vidoes/`. Set `page.banner.enabled` to `false` to remove the banner. Its label and play/pause labels are also editable there. A removed or ambiguous clip hides the banner without blocking the page. Playback is muted, inline, and looped; it pauses offscreen or in a hidden tab, and does not autoplay when reduced motion is requested. Mobile browsers may require tapping Play.
+
 - `index.html`: page shell.
 - `main.js`: loads the content and renders it using textContent.
 - `styles.css`: responsive layout, typography, and colors.

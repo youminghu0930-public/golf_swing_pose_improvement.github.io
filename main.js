@@ -61,8 +61,20 @@ async function renderPage() {
   const demos = [];
   const hero = element('div', undefined, 'hero');
   hero.append(element('p', page.eyebrow, 'eyebrow'), element('h1', page.title));
-  if (page.role) hero.append(element('p', page.role, 'hero-role'));
+  if (page.banner?.enabled !== false && page.banner?.video) {
+    const banner = element('div', undefined, 'hero-banner');
+    banner.setAttribute('role', 'group'); banner.setAttribute('aria-label', page.banner.label);
+    banner.append(element('p', page.banner.loading, 'banner-loading'));
+    hero.append(banner);
+    const demoCopy = sections.find(section=>section.demo)?.demo;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      import('./hero-banner.js').then(module=>module.mountBanner(banner,page.banner,demoCopy)).catch(error=>{
+        console.warn('Banner unavailable',error); banner.hidden=true;
+      });
+    }));
+  }
   main.append(hero);
+  if (page.role) main.append(element('p', page.role, 'hero-role'));
 
   for (const content of sections) {
     const section = element('section');

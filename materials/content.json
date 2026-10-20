@@ -6,6 +6,14 @@
     "role": "My role: I led annotation operations, developed the training and Core ML conversion pipeline, and collaborated with the iOS team on deployment.",
     "navigationLabel": "Project sections",
     "navigationToggle": "Toggle section navigation",
+    "banner": {
+      "enabled": true,
+      "video": "face-on-0000",
+      "label": "Golf-specific pose estimation",
+      "loading": "Loading motion preview…",
+      "play": "Play banner",
+      "pause": "Pause banner"
+    },
     "mainPage": { "label": "Return to main page", "url": "" },
     "footer": "Golf swing pose estimation"
   },
