@@ -14,14 +14,48 @@ async function renderPage() {
   document.querySelector('meta[name="description"]').content = page.description;
 
   const header = element('header');
+  const navigationToggle = element('button', undefined, 'navigation-toggle');
+  navigationToggle.setAttribute('aria-label', page.navigationToggle);
+  navigationToggle.title = page.navigationToggle;
+  const menuIcon = element('span', undefined, 'menu-icon');
+  menuIcon.setAttribute('aria-hidden', 'true');
+  for (let i = 0; i < 3; i++) menuIcon.append(element('span'));
+  navigationToggle.append(menuIcon);
+  navigationToggle.type = 'button';
+  const mobileNavigation = matchMedia('(max-width: 1000px)');
+  const setNavigation = expanded => {
+    navigationToggle.setAttribute('aria-expanded', String(expanded));
+    header.dataset.expanded = String(expanded);
+    const menu = header.querySelector('nav');
+    if (menu) menu.inert = !expanded;
+  };
+  setNavigation(false);
+  mobileNavigation.addEventListener('change', () => setNavigation(false));
+  navigationToggle.setAttribute('aria-controls', 'section-navigation');
   const nav = element('nav');
+  nav.id = 'section-navigation';
+  nav.inert = true;
   nav.setAttribute('aria-label', page.navigationLabel);
   for (const section of sections) {
     const link = element('a', section.title);
     link.href = `#${section.id}`;
+    link.addEventListener('click', () => { if (mobileNavigation.matches) setNavigation(false); });
     nav.append(link);
   }
-  header.append(nav);
+  if (page.mainPage) {
+    const link = element('a', page.mainPage.label, 'return-main-page');
+    try {
+      const url = new URL(page.mainPage.url);
+      if (!['https:', 'http:'].includes(url.protocol)) throw new Error('Unsupported link');
+      link.href = url.href;
+    } catch { link.setAttribute('aria-disabled', 'true'); }
+    nav.append(link);
+  }
+  navigationToggle.onclick = () => setNavigation(navigationToggle.getAttribute('aria-expanded') !== 'true');
+  header.addEventListener('keydown', event => {
+    if (event.key === 'Escape') { setNavigation(false); navigationToggle.focus(); }
+  });
+  header.append(navigationToggle, nav);
 
   const main = element('main');
   const demos = [];
@@ -54,14 +88,20 @@ async function renderPage() {
       }
       body.append(group);
     }
-    if (content.metrics) {
-      const metrics = element('dl', undefined, 'metrics');
-      for (const metric of content.metrics) {
-        const group = element('div');
-        group.append(element('dt', metric.label), element('dd', metric.value));
-        metrics.append(group);
+    if (content.metrics || content.metricGroups) {
+      const metricGroups = element('div', undefined, 'metric-groups');
+      for (const category of content.metricGroups || [{ metrics: content.metrics }]) {
+        const group = element('div', undefined, 'metric-group');
+        if (category.title) group.append(element('h3', category.title, 'metric-category'));
+        const metrics = element('dl', undefined, 'metrics');
+        for (const metric of category.metrics) {
+          const item = element('div');
+          item.append(element('dt', metric.label), element('dd', metric.value));
+          metrics.append(item);
+        }
+        group.append(metrics); metricGroups.append(group);
       }
-      body.append(metrics);
+      body.prepend(metricGroups);
     }
     section.append(heading, body);
     if (content.demo) {

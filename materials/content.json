@@ -5,6 +5,8 @@
     "eyebrow": "Computer vision · Golf swing analysis",
     "role": "My role: I led annotation operations, developed the training and Core ML conversion pipeline, and collaborated with the iOS team on deployment.",
     "navigationLabel": "Project sections",
+    "navigationToggle": "Toggle section navigation",
+    "mainPage": { "label": "Return to main page", "url": "" },
     "footer": "Golf swing pose estimation"
   },
   "sections": [
@@ -27,21 +29,24 @@
       "id": "accomplishment",
       "title": "Contributions and Outcomes",
       "items": [
-        "Model quality: In the examples shown below, our golf-specific model produces results comparable to YOLO26x when joints are clearly visible, while handling several arm-occlusion cases more reliably. These include the follow-through in down-the-line swings and the transition in face-on swings. The model was originally developed during the YOLOv8 era.",
-        "Model efficiency: Designed for real-time inference on mobile devices, the model balances golf-specific accuracy with a lightweight architecture.",
-        "Golfer focus: The trained model can focus on the golfer while ignoring other people in the scene.",
-        "We annotated approximately 480,000 joints across 30,000 frames in about two weeks, at a cost of around US$3,000.",
-        "I worked with the team to establish objective video selection criteria, reducing the annotation workload by approximately two-thirds.",
-        "I developed practical labeling workflows and refined several joint definitions to reduce ambiguity. With my guidance, the team's labeling speed increased to approximately 3× its previous rate.",
-        "I managed an outsourced annotation team of around 10 people, coordinating the labeling work through completion."
+        "Model quality: Developed during the YOLOv8 era, our model resolves approximately 80% of previously difficult examples at near-YOLO-nano inference speed. In the examples below, it is comparable to YOLO26x on visible joints and more reliable under arm occlusion during down-the-line follow-throughs and face-on transitions, while ignoring non-golfer distractions.",
+        "Mobile deployment: I built a training, Core ML conversion, and quantization pipeline for real-time inference on iPhones, then collaborated with the iOS team to deploy the model in the product.",
+        "Annotation efficiency: I worked with the team to define video selection criteria that reduced the workload by approximately two-thirds. My labeling guidance and refined joint definitions reduced ambiguity and increased labeling speed to approximately 3× its previous rate.",
+        "Dataset delivery: I managed an outsourced team of around 10 people to annotate approximately 480,000 joints across 30,000 frames in about two weeks, at a cost of around US$3,000."
       ],
-      "metrics": [
-        { "value": "≈ 3×", "label": "Labeling speed improvement" },
+      "metricGroups": [
+        { "title": "Model performance", "metrics": [
+        { "value": "≈ 80%", "label": "Previously difficult examples resolved" },
+        { "value": "≈ YOLO nano", "label": "Inference speed" }
+        ] },
+        { "title": "Annotation outcomes", "metrics": [
         { "value": "≈ 67%", "label": "Annotation workload reduction" },
+        { "value": "≈ 3×", "label": "Labeling speed improvement" },
         { "value": "≈ 480k", "label": "Joints annotated" },
         { "value": "≈ 30k", "label": "Frames annotated" },
         { "value": "≈ 2 weeks", "label": "Annotation time" },
         { "value": "≈ US$3,000", "label": "Annotation cost" }
+        ] }
       ]
     },
     {

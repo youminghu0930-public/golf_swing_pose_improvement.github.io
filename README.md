@@ -2,6 +2,8 @@
 
 A light, single-page project showcase, built with plain HTML, CSS, and JavaScript for GitHub Pages. No runtime backend is required. Preview and deployment generate a small catalog from the actual files in `materials/data/`.
 
+Main portfolio repository: https://github.com/youminghu0930-public/you-ming-hu.github.io.git
+
 ## Editing content
 
 All project copy lives in **`materials/content.json`**: the browser title, description, hero, navigation labels, section headings, paragraphs, accomplishments, statistics, and result placeholder. Navigation labels are derived from section titles. Edit this file to change the displayed text; no HTML or JavaScript changes are needed.
