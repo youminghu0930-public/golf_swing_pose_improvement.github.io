@@ -61,7 +61,24 @@ Delivery videos have source/settings-versioned generated URLs, and are visible o
 
 ### Curated snapshot highlights
 
-Result contains an upper snapshot carousel and the existing video comparison below it. Edit `materials/data/poses/snapshot.json` using `{ "video-id": { "zero-based-frame": ["joint_name"] } }`. A view-specific video key such as `face-on-0000` can resolve ambiguous IDs. Entries appear in video order, with frames in numeric order.
+Result contains an upper snapshot carousel and the existing video comparison below it. Edit `materials/data/poses/snapshot.json` using the annotated format below (the original joint-name arrays remain supported). A view-specific video key such as `face-on-0000` can resolve ambiguous IDs. Entries appear in video order, with frames in numeric order.
+
+```json
+{
+  "0003": {
+    "101": {
+      "title": "Lead wrist occlusion during follow-through",
+      "joints": ["left_wrist"],
+      "message_box": {
+        "general": "The general-purpose model misplaces the wrist.",
+        "specialized": "The golf-specific model locates the wrist correctly."
+      }
+    }
+  }
+}
+```
+
+`message_box` supplies one explanation per model, with arrows to all selected joints. The earlier `"joints": { "left_wrist": { "general": "…", "specialized": "…" } }` format also works when different joints need different explanations. Repeated identical text in one view becomes one box with multiple arrows. Missing joints produce neither arrows nor borrowed coordinates. Box positions and straight arrow origins are scored against the skeleton and other boxes, preferring clear upper space; avoiding every crossing is not guaranteed. Narrow viewports put notes below the image to preserve visibility. Arrows follow linked zoom/pan and retain the true joint endpoint even offscreen; the viewport clips the offscreen portion rather than hiding the whole arrow.
 
 The page reads `snapshot.json` directly on load; selected frames and joints are not hardcoded. A missing snapshot file produces an empty section, not a broken video viewer. Preview/build preparation extracts small images into `materials/data/.generated/` and includes only each selected frame's Before/After pose in the catalog. Snapshot visitors do not download full prediction files for every curated video. Images and skeletons initialize for the active card first, then its two neighbors; other cards initialize when approached. Newly selected uncached frames can also be extracted from the original video in the browser, with full-pose loading only for the requested cards. Data indices stay zero-based; all displayed frame numbers are index + 1, matching Video comparison.
 

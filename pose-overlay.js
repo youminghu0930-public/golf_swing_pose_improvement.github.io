@@ -11,6 +11,7 @@ const headEdges = [
   [['nose', 'left_ear'], ['nose', 'right_ear'], ['nose', 'atlas'], ['nose', 'top_head']]
 ];
 const usable = point => point && Number.isFinite(point[0]) && Number.isFinite(point[1]) && (point[2] === undefined || point[2] >= 0) && (point[0] !== 0 || point[1] !== 0);
+export const poseConnections = index => [...bodyEdges, ...headEdges[index]];
 const svg = (tag, attributes = {}) => {
   const node = document.createElementNS(svgNS, tag);
   for (const [name, value] of Object.entries(attributes)) node.setAttribute(name, value);

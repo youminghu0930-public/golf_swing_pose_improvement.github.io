@@ -68,11 +68,25 @@ dd { font-size: clamp(22px, 2.5vw, 30px); letter-spacing: -.04em; margin: 0; }
 .snapshot-card:not(.is-current) { pointer-events: none; }
 .snapshot-card-header { display: flex; justify-content: space-between; gap: 12px; padding: 13px 16px; font-size: 12px; color: var(--muted); background: var(--viewer-card); border-bottom: 1px solid var(--viewer-border); }
 .snapshot-card-header strong { color: #253c37; font-weight: 500; }
+.snapshot-card-header { display: grid; grid-template-columns: 1fr auto; }
+.snapshot-sample-title { grid-column: 1 / -1; margin: 0; color: #253c37; font-size: 14px; font-weight: 500; line-height: 1.5; }
 .snapshot-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; background: var(--viewer-border); }
 .snapshot-comparison, .comparison-screens { grid-template-rows: auto auto; row-gap: 0; }
 .snapshot-comparison > .comparison-panel, .comparison-screens > .comparison-panel { display: grid; grid-template-rows: subgrid; grid-row: span 2; }
+.snapshot-comparison { grid-template-rows: auto auto auto; }
+.snapshot-comparison > .comparison-panel { grid-row: span 3; position: relative; }
+.snapshot-callout-rail { position: absolute; left: 0; right: 0; pointer-events: none; z-index: 3; }
+.snapshot-callout { position: absolute; margin: 0; padding: 9px 10px; border: 1px solid var(--model-accent-edge); border-radius: 6px; background: #f4f7f0f5; color: #253c37; font-size: 12px; line-height: 1.45; box-shadow: 0 2px 8px #203b3214; overflow-wrap: anywhere; }
+.snapshot-callout-rail.is-external { position: static; display: grid; gap: 8px; padding: 10px; background: var(--viewer-card); }
+.snapshot-callout { background: var(--viewer-card); }
+.snapshot-callout-rail.is-external .snapshot-callout { position: static; width: 100% !important; box-shadow: none; font-size: 11px; }
+.snapshot-callout-arrows { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.snapshot-callout-arrows path { fill: none; stroke: #fff5c4; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.comparison-panel[data-model=golf] .snapshot-callout-arrows path { stroke: #b2f4d7; }
+.snapshot-demo[data-animating=true] .snapshot-callout-arrows { visibility: hidden; }
 .snapshot-image-window { background: var(--viewer-matte); touch-action: none; }
 .snapshot-image-window .pose-scene { will-change: auto; }
+.snapshot-card.is-current .pose-scene { will-change: transform; }
 .snapshot-card { backface-visibility: visible; }
 .snapshot-motion-preview { display: none; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .snapshot-demo[data-animating=true] .snapshot-motion-preview { display: block; }

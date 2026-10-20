@@ -1,62 +1,62 @@
 {
-    "0003":{
-        "101":["left_wrist"]
-    },
-    "0004":{
-        "31": ["left_wrist"]
-    },
-    "0007":{
-        "44": ["left_wrist"]
-    },
-    "0009":{
-        "145": ["right_wrist"]
-    },
-    "0010":{
-        "31": ["left_wrist"]
-    },
-    "0011":{
-        "77": ["left_wrist"]
-    },
-    "0013":{
-        "266": ["left_wrist"]
-    },
-    "0016": {
-        "29": ["left_shoulder", "left_elbow", "left_wrist"]
-    },
-    "0017":{
-        "25": ["right_wrist"]
-    },
-    "0018":{
-        "199": ["left_elbow"]
-    },
-    "0019-1":{
-        "150": ["left_wrist"]
-    },
-    "0019-4":{
-        "138": ["left_wrist"]
-    },
-    "0019-5":{
-        "178": ["left_elbow"]
-    },
-    "0022-1":{
-        "37": ["left_shoulder", "left_elbow", "left_wrist"]
-    },
-    "0022-2":{
-        "108": ["left_shoulder", "left_elbow", "left_wrist"]
-    },
-    "0025-2":{
-        "70": ["left_shoulder", "left_elbow", "left_wrist"]
+    "0027":{
+        "130": {
+            "title":"Elbow flexion during a down-the-line downswing", 
+            "joints":["right_elbow"],
+            "message_box":{
+                "general":"The general-purpose model underestimates the elbow bend, predicting a straighter arm than the reference pose.",
+                "specialized":"The golf-specific model better captures elbow flexion and arm alignment."
+            }
+        }
     },
     "0026-2":{
-        "99": ["left_shoulder", "left_elbow", "left_wrist"]
+        "99": {
+            "title":"Separating the arms at the face-on transition", 
+            "joints":["left_wrist", "left_elbow", "right_elbow", "right_wrist"],
+            "message_box":{
+                "general":"The general-purpose model merges the left and right arm predictions in this pose.",
+                "specialized":"The golf-specific model distinguishes both arms and preserves their separate joint connections."
+            }
+        }
     },
-    "0026-5":{
-        "104": ["right_shoulder"]
+    "0016":{
+        "29": {
+            "title":"Left–right shoulder assignment during the face-on transition", 
+            "joints":["left_shoulder", "right_shoulder"],
+            "message_box":{
+                "general":"The general-purpose model swaps the left and right shoulders as the torso rotates.",
+                "specialized":"The golf-specific model maintains the correct shoulder assignments and arm connections."
+            }
+        }
     },
-    "0027":{
-        "130": ["right_elbow"]
+    "0017":{
+        "25": {
+            "title":"Arm estimation under motion blur in a face-on downswing", 
+            "joints":["right_wrist", "right_elbow", "left_wrist", "left_elbow"],
+            "message_box":{
+                "general":"The general-purpose model misplaces the arm joints under motion blur.",
+                "specialized":"The golf-specific model distinguishes the left and right arms despite blur and closely spaced hands."
+            }
+        }
     },
-    "0030":{
-        "31": ["left_wrist"]
+    "0003":{
+        "101": {
+            "title":"Lead-arm occlusion during a down-the-line follow-through", 
+            "joints":["left_wrist","left_elbow"],
+            "message_box":{
+                "general":"The general-purpose model misplaces the lead wrist and elbow as the arm passes behind the torso.",
+                "specialized":"The golf-specific model locates the lead-arm joints more accurately despite occlusion."
+            }
+        }
+    },
+    "0009":{
+        "145": {
+            "title":"Severe arm occlusion during a down-the-line follow-through", 
+            "joints": ["right_wrist","left_elbow"],
+            "message_box":{
+                "general":"The general-purpose model produces inconsistent joint locations when the arms are largely hidden by the torso.",
+                "specialized":"The golf-specific model produces a more anatomically plausible pose, although some joint locations remain imperfect."
+            }
+        }
     }
 }

@@ -8,7 +8,10 @@ export function snapshotItems(config, clips, { onWarning } = {}) {
       throw new Error(error);
     }
     const clip = matches[0];
-    for (const [value, joints] of Object.entries(frames)) {
+    for (const [value, sample] of Object.entries(frames)) {
+      const legacy = Array.isArray(sample);
+      const definitions = !legacy && sample?.joints;
+      const joints = legacy ? sample : Array.isArray(definitions) ? definitions : definitions && typeof definitions === 'object' ? Object.keys(definitions) : [];
       const frame = Number(value);
       const error = !Number.isInteger(frame) || frame < 0 || frame >= clip.frameCount
         ? `Invalid snapshot frame ${video}/${value}`
@@ -18,7 +21,15 @@ export function snapshotItems(config, clips, { onWarning } = {}) {
         if (onWarning) { onWarning(error); continue; }
         throw new Error(error);
       }
-      entries.push({ clip, frame, joints: [...new Set(joints)] });
+      const entry = { clip, frame, joints: [...new Set(joints)] };
+      if (!legacy) {
+        entry.title = typeof sample.title === 'string' ? sample.title : '';
+        entry.explanations = Object.fromEntries(joints.map(name => [name, {
+          general: typeof definitions[name]?.general === 'string' ? definitions[name].general : typeof sample.message_box?.general === 'string' ? sample.message_box.general : '',
+          specialized: typeof definitions[name]?.specialized === 'string' ? definitions[name].specialized : typeof sample.message_box?.specialized === 'string' ? sample.message_box.specialized : '',
+        }]));
+      }
+      entries.push(entry);
     }
   }
   return entries;

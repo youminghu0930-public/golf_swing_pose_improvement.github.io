@@ -2,6 +2,7 @@ import { createPoseOverlay } from './pose-overlay.js';
 import { snapshotItems, spotlightPoints, snapshotFocus } from './snapshot-data.js';
 import { installLinkedView, focusedView } from './linked-view.js';
 import { comparisonLabels } from './model-labels.js';
+import { createSnapshotCallouts } from './snapshot-callouts.js';
 
 const make = (tag, text, className) => {
   const node = document.createElement(tag);
@@ -114,9 +115,9 @@ export async function mountSnapshots(root, copy) {
   ]);
   const poses = new Map();
   copy = { ...copy, ...comparisonLabels(copy, manifest.models) };
-  const snapshots = snapshotItems(config, manifest.clips, { onWarning: message => console.warn(message) }).map(({ clip, frame, joints }) => {
+  const snapshots = snapshotItems(config, manifest.clips, { onWarning: message => console.warn(message) }).map(({ clip, frame, joints, title, explanations }) => {
     const cached = manifest.snapshots?.find(entry => entry.key === `${clip.key}-${frame}`);
-    return { ...clip, videoId: clip.id, frame, joints, image: cached?.image, before: cached?.before, after: cached?.after,
+    return { ...clip, videoId: clip.id, frame, joints, title, explanations, image: cached?.image, before: cached?.before, after: cached?.after,
       credit: credits[clip.key] ?? credits[clip.id] ?? credits[clip.id.split('-')[0]] ?? null };
   });
   if (!snapshots.length) { root.replaceChildren(make('p', labels.empty)); return; }
@@ -142,8 +143,9 @@ export async function mountSnapshots(root, copy) {
     card.setAttribute('aria-label', format(labels.itemLabel, { video: entry.videoId, frame: displayFrame }));
     const header = make('div', undefined, 'snapshot-card-header');
     header.append(make('strong', format(copy.clipLabel, { id: entry.videoId })), make('span', format(labels.frame, { frame: displayFrame })));
+    if (entry.title) header.append(make('h4', entry.title, 'snapshot-sample-title'));
     const comparison = make('div', undefined, 'snapshot-comparison');
-    const viewports = [], scenes = [], overlays = [], shades = [];
+    const viewports = [], scenes = [], overlays = [], shades = [], panels = [], callouts = [];
     const images = [], errors = [], previews = [];
     let viewState = { zoom: 1, x: 0, y: 0 }, loading, focusReady = false, manuallyAdjusted = false;
     for (const [side, viewIndex] of [['before', 0], ['after', 1]]) {
@@ -164,6 +166,7 @@ export async function mountSnapshots(root, copy) {
       preview.setAttribute('aria-hidden', 'true'); viewport.append(preview); previews.push(preview);
       viewports.push(viewport); scenes.push(scene); images.push(image); errors.push(imageError);
       panel.append(heading, viewport); comparison.append(panel);
+      panels.push(panel);
     }
     const defaultFocus = () => focusedView({ point: snapshotFocus(entry), width: entry.width, height: entry.height,
       viewportWidth: viewports[0].clientWidth, viewportHeight: viewports[0].clientHeight, zoom: 2 });
@@ -171,6 +174,7 @@ export async function mountSnapshots(root, copy) {
       viewState = state;
       overlays.forEach(overlay => overlay.setTransform(state));
       shades.forEach(update => update(state));
+      callouts.forEach(update => update(state));
     }, {
       resizeView: state => focusReady && !manuallyAdjusted ? defaultFocus() : state,
       onInteraction: () => { manuallyAdjusted = true; },
@@ -198,6 +202,7 @@ export async function mountSnapshots(root, copy) {
         for (const layer of viewport.querySelectorAll('.pose-overlay')) await paintSVG(context, layer, width, height);
         // Copy the actual live shading pixels; never re-export an SVG mask.
         context.drawImage(viewport.querySelector('.snapshot-shade'), 0, 0, width, height);
+        for (const layer of viewport.querySelectorAll('.snapshot-callout-arrows')) await paintSVG(context, layer, width, height);
       }));
       previewKey = key;
       });
@@ -224,6 +229,8 @@ export async function mountSnapshots(root, copy) {
           overlays.push(overlay);
           const updateShade = addShade(viewports[viewIndex], entry, side);
           updateShade(viewState); shades.push(updateShade);
+          const updateCallouts = createSnapshotCallouts(viewports[viewIndex], panels[viewIndex], entry, side);
+          updateCallouts(viewState); callouts.push(updateCallouts);
         }
         if (!entry.image) {
           const image = await extractSnapshot(entry);

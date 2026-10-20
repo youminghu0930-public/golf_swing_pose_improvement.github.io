@@ -2,6 +2,28 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { snapshotItems, spotlightPoints, snapshotFocus } from '../snapshot-data.js';
 
+test('snapshot joint arrays support shared per-model message boxes', () => {
+  const [item] = snapshotItems({ swing: { 0: { title:'Occluded hands', joints:['left_wrist','right_wrist'],
+    message_box:{general:'Incorrect wrists',specialized:'Reasonable wrists'} } } },
+    [{id:'swing',key:'face-on-swing',frameCount:10}]);
+  assert.equal(item.title,'Occluded hands');
+  assert.deepEqual(item.joints,['left_wrist','right_wrist']);
+  assert.deepEqual(item.explanations.left_wrist,item.explanations.right_wrist);
+  assert.equal(item.explanations.left_wrist.general,'Incorrect wrists');
+  assert.equal(item.explanations.right_wrist.specialized,'Reasonable wrists');
+});
+
+test('rich snapshots retain titles, joint selection, and per-model explanations', () => {
+  const [item] = snapshotItems({ swing: { 0: { title: 'Arm occlusion', joints: {
+    left_wrist: { general: 'Uncertain wrist', specialized: 'Correct wrist' },
+    right_elbow: { specialized: 'Visible elbow' },
+  } } } }, [{ id:'swing', key:'face-on-swing', frameCount:10 }]);
+  assert.equal(item.title,'Arm occlusion');
+  assert.deepEqual(item.joints,['left_wrist','right_elbow']);
+  assert.equal(item.explanations.left_wrist.general,'Uncertain wrist');
+  assert.equal(item.explanations.right_elbow.general,'');
+});
+
 const clips = [{ id: '0000', key: 'face-on-0000', frameCount: 100 }, { id: '0001', key: 'face-on-0001', frameCount: 50 }];
 test('curated videos expand into ordered, zero-based frame entries', () => {
   const result = snapshotItems({ '0000': { '10': ['right_elbow', 'left_ankle'], '20': ['left_elbow'] }, '0001': { '15': ['left_ankle'], '25': ['left_elbow'] } }, clips);
