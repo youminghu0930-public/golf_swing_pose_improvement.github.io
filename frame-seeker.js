@@ -1,6 +1,6 @@
 // Keep requested frame indices independent of asynchronous decoder events.
 export function createFrameSeeker(video, { getTimes, onRequest, onSettled }) {
-  let pending = null, inFlight = null, presented = false, seekFinished = false, callback;
+  let pending = null, inFlight = null, presented = false, seekFinished = false, callback, presentationFallback;
   const waiters = new Set();
   function idle() {
     if (pending !== null || inFlight !== null || video.seeking) return;
@@ -10,6 +10,9 @@ export function createFrameSeeker(video, { getTimes, onRequest, onSettled }) {
   function settle() {
     if (inFlight === null) { pump(); return; }
     if (!seekFinished || !presented) return;
+    clearTimeout(presentationFallback);
+    if (callback !== undefined) video.cancelVideoFrameCallback?.(callback);
+    callback = undefined;
     const completed = inFlight;
     inFlight = null;
     // Present completed intermediate frames during a held key or long scrub.
@@ -50,7 +53,16 @@ export function createFrameSeeker(video, { getTimes, onRequest, onSettled }) {
       video.currentTime = time;
     }
   }
-  video.addEventListener('seeked', () => { seekFinished = true; settle(); });
+  video.addEventListener('seeked', () => {
+    seekFinished = true;
+    // Mobile compositors may withhold callbacks for a paused decoder surface.
+    // Prefer the exact callback, but never leave the frame controls locked forever.
+    if (inFlight !== null && !presented) {
+      clearTimeout(presentationFallback);
+      presentationFallback = setTimeout(() => { presented = true; settle(); }, 250);
+    }
+    settle();
+  });
   return {
     request(index) {
       const target = Math.max(0, Math.min(getTimes().length - 1, index));
@@ -63,6 +75,7 @@ export function createFrameSeeker(video, { getTimes, onRequest, onSettled }) {
       return new Promise(resolve => waiters.add(resolve));
     },
     reset() {
+      clearTimeout(presentationFallback);
       if (callback !== undefined) video.cancelVideoFrameCallback?.(callback);
       callback = undefined; presented = false; seekFinished = false;
       pending = null; inFlight = null;

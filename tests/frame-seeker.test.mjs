@@ -85,3 +85,23 @@ test('frame presentation before seeked still waits for decoder seek completion',
   video.complete();
   assert.deepEqual(displayed, [20]);
 });
+
+test('a mobile decoder that withholds presentation callbacks does not lock frame controls', async () => {
+  const { video, seeker, displayed } = setup();
+  video.requestVideoFrameCallback = () => 1;
+  video.cancelVideoFrameCallback = () => {};
+  seeker.request(5); video.complete();
+  await seeker.whenIdle();
+  assert.deepEqual(displayed, [5]);
+  seeker.request(6); video.complete();
+  await seeker.whenIdle();
+  assert.deepEqual(displayed, [5, 6]);
+});
+
+test('reset cancels a pending mobile presentation fallback', async () => {
+  const { video, seeker, displayed } = setup();
+  video.requestVideoFrameCallback = () => 1;
+  seeker.request(5); video.complete(); seeker.reset();
+  await new Promise(resolve => setTimeout(resolve, 300));
+  assert.deepEqual(displayed, []);
+});

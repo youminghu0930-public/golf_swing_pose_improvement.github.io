@@ -10,6 +10,20 @@ const make = (tag, text, className) => {
   return node;
 };
 const format = (text, values) => text.replace(/\{(\w+)\}/g, (_, key) => values[key]);
+function playbackIcon(button, key) {
+  const paths = {
+    start: 'M5 4v16M19 5 8 12l11 7Z',
+    previous: 'M6 4v16M18 5 8 12l10 7Z',
+    play: 'm8 5 11 7-11 7Z',
+    stop: 'M6 6h12v12H6Z',
+    next: 'M18 4v16M6 5l10 7-10 7Z',
+    end: 'M19 4v16M5 5l11 7-11 7Z',
+  };
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS(svg.namespaceURI, 'path');
+  path.setAttribute('d', paths[key]); svg.append(path); button.replaceChildren(svg);
+}
 async function readJSON(url, signal, cache = 'default') {
   const response = await fetch(url, { signal, cache });
   if (!response.ok) throw new Error(`${url}: ${response.status}`);
@@ -24,6 +38,8 @@ export async function mountViewer(root, copy) {
   player.setAttribute('aria-label', `${copy.before} / ${copy.after}`);
   const screens = make('div', undefined, 'comparison-screens');
   const loadingOverlay = make('div', copy.loading, 'video-loading');
+  const loadButton = make('button', copy.loadVideo, 'video-load-button');
+  loadButton.type = 'button'; loadButton.hidden = true;
   screens.append(loadingOverlay);
   const canvases = [];
   const selected = new Set();
@@ -59,7 +75,10 @@ export async function mountViewer(root, copy) {
   }
   const video = document.createElement('video');
   video.muted = true;
+  video.defaultMuted = true;
+  video.setAttribute('muted', '');
   video.playsInline = true;
+  video.setAttribute('playsinline', '');
   video.preload = 'metadata';
   // Keep a rendered decoder surface: display:none can suppress paused frame
   // presentation callbacks and leave drawImage reading the previous texture.
@@ -77,8 +96,8 @@ export async function mountViewer(root, copy) {
   meta.append(frameLabel, status);
   const controls = make('div', undefined, 'playback-controls');
   const buttons = {};
-  for (const [key, glyph] of [['start', '⏮'], ['previous', '◀│'], ['play', '▶'], ['next', '│▶'], ['end', '⏭']]) {
-    const button = make('button', glyph);
+  for (const key of ['start', 'previous', 'play', 'next', 'end']) {
+    const button = make('button'); playbackIcon(button, key);
     button.type = 'button'; button.title = copy[key];
     button.setAttribute('aria-label', copy[key]);
     controls.append(button); buttons[key] = button;
@@ -102,7 +121,9 @@ export async function mountViewer(root, copy) {
   resetView.onclick = () => linkedView.reset();
   const credit = make('div', undefined, 'video-credit');
   credit.hidden = true;
-  player.append(screens, slider, meta, controls, zoomControls, credit, make('p', copy.panZoomHint, 'keyboard-hint'), make('p', copy.keyboard, 'keyboard-hint'), make('p', copy.inspectionHint, 'keyboard-hint'), video);
+  const details = make('div', undefined, 'video-details');
+  details.append(credit, make('p', copy.panZoomHint, 'keyboard-hint'), make('p', copy.keyboard, 'keyboard-hint'), make('p', copy.inspectionHint, 'keyboard-hint'));
+  player.append(screens, slider, meta, controls, zoomControls, video);
   const sidebar = make('aside', undefined, 'video-sidebar');
   const sidebarHeading = make('div', undefined, 'sidebar-heading');
   const countLabel = make('span', copy.loadingList);
@@ -113,7 +134,7 @@ export async function mountViewer(root, copy) {
   viewLabel.append(viewSelect);
   const list = make('div', undefined, 'video-list');
   sidebar.append(sidebarHeading, viewLabel, list);
-  root.replaceChildren(player, sidebar);
+  root.replaceChildren(player, sidebar, details);
   document.addEventListener('click', event => {
     if (event.defaultPrevented || event.target.closest('.pose-viewport, button, input, select, a, label')) return;
     selected.clear(); overlays.forEach(overlay => overlay.updateSelection());
@@ -175,7 +196,7 @@ export async function mountViewer(root, copy) {
     playing = false; video.pause();
     if (frameCallback !== undefined) video.cancelVideoFrameCallback?.(frameCallback);
     cancelAnimationFrame(animation);
-    buttons.play.textContent = '▶'; buttons.play.title = copy.play;
+    playbackIcon(buttons.play, 'play'); buttons.play.title = copy.play;
     buttons.play.setAttribute('aria-label', copy.play);
   }
   function frameAt(time) {
@@ -214,7 +235,7 @@ export async function mountViewer(root, copy) {
     await seeker.whenIdle();
     if (!ready || request !== playRequest || currentVersion !== version) return;
     playing = true;
-    buttons.play.textContent = '■'; buttons.play.title = copy.stop;
+    playbackIcon(buttons.play, 'stop'); buttons.play.title = copy.stop;
     buttons.play.setAttribute('aria-label', copy.stop);
     try { await video.play(); if (playing) schedule(); }
     catch (error) { stop(); console.error(error); }
@@ -261,14 +282,31 @@ export async function mountViewer(root, copy) {
     for (const canvas of canvases) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
     for (const button of list.querySelectorAll('button')) button.setAttribute('aria-pressed', String(button.dataset.key === clip.key));
     function loadVideo(url) { return new Promise((resolve, reject) => {
+      let unlockPlayback = false;
+      const promptTimer = setTimeout(() => {
+        loadButton.hidden = false;
+        loadingOverlay.replaceChildren(loadButton);
+      }, 3000);
       const cleanup = () => {
+        clearTimeout(promptTimer); loadButton.hidden = true; loadButton.onclick = null;
         video.removeEventListener('loadeddata', loaded); video.removeEventListener('error', failed);
+        video.removeEventListener('canplay', loaded);
         signal.removeEventListener('abort', aborted);
       };
-      const loaded = () => { video.preload = 'metadata'; cleanup(); resolve(); };
+      const loaded = () => {
+        if (video.readyState < 2) return;
+        if (unlockPlayback) video.pause();
+        video.preload = 'metadata'; cleanup(); resolve();
+      };
       const failed = () => { cleanup(); reject(new Error('Video could not load')); };
       const aborted = () => { cleanup(); reject(new DOMException('Aborted', 'AbortError')); };
+      // Some mobile browsers defer decoding until a direct user gesture.
+      loadButton.onclick = () => {
+        unlockPlayback = true;
+        video.play().then(loaded).catch(error => { console.warn('Tap-to-load playback was blocked', error); });
+      };
       video.addEventListener('loadeddata', loaded, { once: true });
+      video.addEventListener('canplay', loaded);
       video.addEventListener('error', failed, { once: true });
       signal.addEventListener('abort', aborted, { once: true });
       // Fetch enough to present the first frame reliably, then stop aggressive preloading.
@@ -299,7 +337,7 @@ export async function mountViewer(root, copy) {
         canvas.width = Math.min(720, video.videoWidth);
         canvas.height = Math.round(canvas.width * video.videoHeight / video.videoWidth);
       }
-      ready = true; setEnabled(true); status.textContent = copy.ready; seek(0);
+      ready = true; setEnabled(true); status.textContent = ''; draw(); seek(0);
     } catch (error) {
       if (current !== version || error.name === 'AbortError') return;
       showError(error);

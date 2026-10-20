@@ -122,6 +122,7 @@
         "next": "Next frame",
         "end": "Jump to end",
         "loading": "Loading swing…",
+        "loadVideo": "Tap to load video",
         "loadingDemo": "Loading the video demo…",
         "loadingList": "Loading video list…",
         "ready": "Ready",
