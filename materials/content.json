@@ -27,13 +27,13 @@
       "id": "accomplishment",
       "title": "Contributions and Outcomes",
       "items": [
-        "I worked with the team to establish objective video selection criteria, reducing the annotation workload by approximately two-thirds.",
-        "I managed an outsourced annotation team of around 10 people, coordinating the labeling work through completion.",
-        "I developed practical labeling workflows and refined several joint definitions to improve annotation efficiency and reduce ambiguity.",
-        "We annotated approximately 480,000 joints across 30,000 frames in about two weeks, at a cost of around US$3,000.",
         "Model quality: In the examples shown below, our golf-specific model produces results comparable to YOLO26x when joints are clearly visible, while handling several arm-occlusion cases more reliably. These include the follow-through in down-the-line swings and the transition in face-on swings. The model was originally developed during the YOLOv8 era.",
         "Model efficiency: Designed for real-time inference on mobile devices, the model balances golf-specific accuracy with a lightweight architecture.",
-        "Golfer focus: The trained model can focus on the golfer while ignoring other people in the scene."
+        "Golfer focus: The trained model can focus on the golfer while ignoring other people in the scene.",
+        "We annotated approximately 480,000 joints across 30,000 frames in about two weeks, at a cost of around US$3,000.",
+        "I worked with the team to establish objective video selection criteria, reducing the annotation workload by approximately two-thirds.",
+        "I developed practical labeling workflows and refined several joint definitions to improve annotation efficiency and reduce ambiguity.",
+        "I managed an outsourced annotation team of around 10 people, coordinating the labeling work through completion."
       ],
       "metrics": [
         { "value": "≈ 67%", "label": "Annotation workload reduction" },
@@ -49,31 +49,33 @@
       
       "subsections": [
         {
-          "title": "Reusable annotation workflow",
-          "paragraphs": [
-            "I created tools and documented the workflows, joint definitions, and lessons learned so future annotation teams could build on this experience rather than solve the same problems again. The documentation covers:"
-          ],
+          "title": "Research value",
+          "paragraphs": ["The project offers practical insights into improving pose estimation and guiding future model development:"],
           "items": [
-            "Using the internal management tool to coordinate an outsourced annotation team more efficiently.",
-            "Practical labeling techniques for faster, more consistent annotation.",
-            "The reasoning behind the joint definitions and the benefits of each choice."
+            "Data, not capacity: The results suggest that training data coverage was the main bottleneck in the cases studied, even with a lightweight model.",
+            "Single-frame prediction: The examples show plausible estimates under occlusion or blur without using preceding or following frames.",
+            "Lower-risk improvement: A repeatable data collection, annotation, and retraining cycle could improve accuracy without requiring a new architecture first.",
+            "Future-ready pipeline: The existing training and deployment workflow provides a foundation for integrating new models while managing research risk and cost."
           ]
         },
         {
           "title": "Production engineering",
           "paragraphs": ["For production, I created and delivered:"],
           "items": [
-            "A standardized data pipeline to merge existing and newly annotated datasets for model training.",
+            "Cross-functional integration work with the iOS team to deploy the Core ML model in the product.",
             "A reusable workflow for model training, inference, and Core ML conversion.",
-            "Cross-functional integration work with the iOS team to deploy the Core ML model in the product."
+            "A standardized data pipeline to merge existing and newly annotated datasets for model training."
           ]
         },
         {
-          "title": "Research value",
+          "title": "Reusable annotation workflow",
           "paragraphs": [
-            "The results suggest that training data coverage, rather than model capacity, was the main bottleneck in the cases studied. Even a lightweight model could learn the golf-specific information needed to improve these predictions.",
-            "In the examples shown, the model can produce plausible joint estimates even under occlusion or blur, using only a single frame without context from preceding or following frames.",
-            "This provides a practical baseline for continued improvement without requiring a new architecture first. A repeatable cycle of collecting representative user footage, annotating difficult cases, and retraining could extend this approach. With the training and deployment pipeline already in place, the company has more room to explore new models while managing research risk and cost, and a clearer path to integrating future architectures."
+            "I created tools and documented the workflows, joint definitions, and lessons learned so future annotation teams could build on this experience rather than solve the same problems again. The documentation covers:"
+          ],
+          "items": [
+            "Practical labeling techniques for faster, more consistent annotation.",
+            "The reasoning behind the joint definitions and the benefits of each choice.",
+            "Using the internal management tool to coordinate an outsourced annotation team more efficiently."
           ]
         }
       ]
