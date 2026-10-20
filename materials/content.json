@@ -32,10 +32,11 @@
         "Golfer focus: The trained model can focus on the golfer while ignoring other people in the scene.",
         "We annotated approximately 480,000 joints across 30,000 frames in about two weeks, at a cost of around US$3,000.",
         "I worked with the team to establish objective video selection criteria, reducing the annotation workload by approximately two-thirds.",
-        "I developed practical labeling workflows and refined several joint definitions to improve annotation efficiency and reduce ambiguity.",
+        "I developed practical labeling workflows and refined several joint definitions to reduce ambiguity. With my guidance, the team's labeling speed increased to approximately 3× its previous rate.",
         "I managed an outsourced annotation team of around 10 people, coordinating the labeling work through completion."
       ],
       "metrics": [
+        { "value": "≈ 3×", "label": "Labeling speed improvement" },
         { "value": "≈ 67%", "label": "Annotation workload reduction" },
         { "value": "≈ 480k", "label": "Joints annotated" },
         { "value": "≈ 30k", "label": "Frames annotated" },
