@@ -32,7 +32,7 @@
         "I established annotation workflows and practical tips for faster labeling, and refined the definitions of several joints to make the process more efficient and less prone to human error.",
         "We annotated approximately 480,000 joints across 30,000 frames in about two weeks, at a cost of around US$3,000.",
         "Model accuracy: Developed during the YOLOv8 era, our improved model achieves accuracy comparable to YOLO26x in 2026 when joints are visible. It still outperforms YOLO26x when the torso occludes the arms, particularly during the follow-through in down-the-line swings and the transition in face-on swings.",
-        "Model efficiency: The model remains lightweight enough to run in real time on edge devices",
+        "Model efficiency: The model remains lightweight enough to run in real time on edge devices. The computation complexity is close to YOLO nano model",
         "The newly trained model automatically ignores distracting poses from people other than the golfer."
       ],
       "metrics": [
