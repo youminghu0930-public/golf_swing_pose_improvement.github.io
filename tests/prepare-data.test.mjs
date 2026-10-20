@@ -26,11 +26,14 @@ test('catalog reflects actual files, preserves hyphens, and drops deleted/incomp
     assert.equal(first.clips[0].poses.after, 'data/poses/after/down-the-line/0019-1.json');
     assert.equal(first.clips[0].frameCount, 2);
     assert.equal(first.snapshots.length, 1);
+    assert.match(first.snapshots[0].image, /0019-1-frame-1-[a-f0-9]{12}-q82\.webp$/);
     assert.deepEqual(first.snapshots[0].before, { joints: ['nose'], pred: [[[3, 4]]] });
     assert.deepEqual(first.snapshots[0].after, { joints: ['nose'], pred: [[[3, 4]]] });
     assert.equal(JSON.parse(fs.readFileSync(path.join(root, first.clips[0].poses.before))).pred.length, 2);
     write('data/poses/before/down-the-line/0019-1.json', JSON.stringify({ joints: ['nose'], pred: [[[1, 2]], [[30, 40]]] }));
     assert.deepEqual(prepareData(root, options).snapshots[0].before.pred, [[[30, 40]]]);
+    write('data/vidoes/down-the-line/0019-1.MP4', 'new video content');
+    assert.notEqual(prepareData(root, options).snapshots[0].image, first.snapshots[0].image);
     fs.unlinkSync(path.join(root, 'data/poses/after/down-the-line/0019-1.json'));
     const second = prepareData(root, options);
     assert.deepEqual(second, { clips: [], snapshots: [] });

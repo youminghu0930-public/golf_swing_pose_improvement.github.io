@@ -37,7 +37,17 @@ In repository Settings → Pages, choose **GitHub Actions** as the build/deploym
 
 `data/` is no longer ignored. Only the data files actually committed and pushed are visible to the deployment build. Keep/remove whichever source clips you want before committing; the build scans that checkout, skips clips missing Before or After poses, and creates a fresh catalog. It does not use local ignored previews or the old `assets/` directory. Missing/invalid snapshot selections are skipped, so one removed clip does not break the others. Generated metadata/previews and `dist/` remain ignored.
 
-To check the same deployment build locally, run `node scripts/build-site.mjs`, then `node scripts/serve.mjs --dist`. It creates a clean `dist/` with the site, catalog, preview images, and video/pose files for valid pairs. Videos with metadata at the end are losslessly remuxed in `dist/` at the same relative path, placing metadata first for fast startup. Video/audio packets are copied, not re-encoded: resolution, frame rate, and frame alignment are preserved. Original videos in `data/` and full pose JSON remain unchanged. Already-fast-start videos are copied as-is. No second set of videos is deployed under `assets/`. Keep browser-compatible MP4 codecs in the originals.
+To check the same deployment build locally, run `node scripts/build-site.mjs`, then `node scripts/serve.mjs --dist`. It creates a clean `dist/` with the site, catalog, preview images, and video/pose files for valid pairs. Apart from the optional compression trial below, videos with metadata at the end are losslessly remuxed in `dist/` at the same relative path, placing metadata first for fast startup. Video/audio packets are copied, not re-encoded: resolution, frame rate, and frame alignment are preserved. Original videos in `data/` and full pose JSON remain unchanged. Already-fast-start videos are copied as-is. No second set of videos is deployed under `assets/`. Keep browser-compatible MP4 codecs in the originals.
+
+### Media delivery experiment
+
+`scripts/media-options.json` controls the current experiment:
+
+- `snapshotWebpQuality`: full-source-resolution WebP snapshot quality (currently 82). Images are not downscaled, so zoom inspection retains the original pixel dimensions. Generated filenames include a source-content hash and quality setting, preventing changed media from reusing stale URLs.
+- `trialVideoKey`: the one video to re-encode in the deployment build (currently `face-on-0000`). Set to `null` to disable the trial; other clips keep their existing lossless fast-start behavior. Removing the trial clip from data also disables it automatically.
+- `trialVideoCrf`: H.264 quality setting (currently 23; lower values mean higher quality/larger files). The trial uses the slow encoder preset, preserves audio, and includes fast-start metadata. After encoding, the build verifies resolution, frame count, and every frame timestamp. It fails if alignment changes and keeps the original if the trial is not smaller. Only the chosen delivery version is deployed, not both videos.
+
+The trial has a versioned generated URL, and is visible only in `dist/`/the deployed site; ordinary source preview still shows the original video. These are lossy delivery formats, not changes to model results. Always review visual quality before expanding compression to more clips. Source videos, annotations, frame indices, and pose JSON remain unchanged. The experiment reduces transfer bytes; actual loading-time gains depend on network and browser caching.
 
 ## Preparing the demo
 

@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { snapshotItems } from '../snapshot-data.js';
 
 export const projectRoot = fileURLToPath(new URL('../', import.meta.url));
@@ -10,6 +11,8 @@ const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
 const directories = directory => fs.existsSync(directory) ? fs.readdirSync(directory, { withFileTypes: true }).filter(e => e.isDirectory() && !e.name.startsWith('.')).map(e => e.name).sort() : [];
 
 export function prepareData(root = projectRoot, { probe = probeVideo, preview = makePreview, warn = console.warn } = {}) {
+  const options = read(fileURLToPath(new URL('./media-options.json', import.meta.url)));
+  if (!Number.isInteger(options.snapshotWebpQuality) || options.snapshotWebpQuality < 0 || options.snapshotWebpQuality > 100) throw new Error('Snapshot WebP quality must be an integer from 0 to 100');
   for (const command of [probe === probeVideo && 'ffprobe', preview === makePreview && 'ffmpeg'].filter(Boolean)) {
     try { execFileSync(command, ['-version'], { stdio: 'ignore' }); }
     catch { throw new Error(`Install FFmpeg (including ${command}) before preparing data.`); }
@@ -42,7 +45,9 @@ export function prepareData(root = projectRoot, { probe = probeVideo, preview = 
         const source = path.join(root, video), stat = fs.statSync(source);
         const signature = `${stat.size}:${stat.mtimeMs}`;
         const metadata = oldCache[video]?.signature === signature ? oldCache[video].metadata : probe(source);
-        cache[video] = { signature, metadata };
+        const hash = oldCache[video]?.signature === signature && oldCache[video].hash
+          ? oldCache[video].hash : createHash('sha256').update(fs.readFileSync(source)).digest('hex').slice(0, 12);
+        cache[video] = { signature, metadata, hash };
         const frameCount = Math.min(metadata.times.length, ...counts);
         if (!frameCount) throw new Error('No shared frames');
         const thumbnail = `data/.generated/${key}-thumbnail.jpg`;
@@ -58,9 +63,10 @@ export function prepareData(root = projectRoot, { probe = probeVideo, preview = 
   if (fs.existsSync(configFile)) {
     try {
       for (const { clip, frame } of snapshotItems(read(configFile), clips, { onWarning: warn })) {
-        const image = `data/.generated/${clip.key}-frame-${frame}.jpg`;
+        const hash = cache[clip.video].hash;
+        const image = `data/.generated/${clip.key}-frame-${frame}-${hash}-q${options.snapshotWebpQuality}.webp`;
         try {
-          ensurePreview(path.join(root, clip.video), path.join(root, image), frame);
+          if (!fs.existsSync(path.join(root, image))) preview(path.join(root, clip.video), path.join(root, image), frame, options.snapshotWebpQuality);
           const snapshot = { key: `${clip.key}-${frame}`, image };
           for (const side of ['before', 'after']) {
             const file = clip.poses[side];
@@ -88,9 +94,10 @@ function probeVideo(file) {
   return { times, width: result.streams[0].width, height: result.streams[0].height };
 }
 
-function makePreview(source, destination, frame) {
+function makePreview(source, destination, frame, quality = 82) {
   const filter = frame === null ? 'scale=192:192:force_original_aspect_ratio=decrease' : `select=eq(n\\,${frame})`;
-  execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', source, '-vf', filter, '-frames:v', '1', '-q:v', frame === null ? '5' : '3', destination]);
+  const codec = frame === null ? ['-q:v', '5'] : ['-c:v', 'libwebp', '-quality', String(quality), '-compression_level', '6'];
+  execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', source, '-vf', filter, '-frames:v', '1', ...codec, destination]);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
