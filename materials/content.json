@@ -67,6 +67,14 @@
             "A reusable workflow for model training, inference, and Core ML conversion.",
             "Cross-functional integration work with the iOS team to deploy the Core ML model in the product."
           ]
+        },
+        {
+          "title": "Research value",
+          "paragraphs": [
+            "The results suggest that training data coverage, rather than model capacity, was the main bottleneck in the cases studied. Even a lightweight model could learn the golf-specific information needed to improve these predictions.",
+            "In the examples shown, the model can produce plausible joint estimates even under occlusion or blur, using only a single frame without context from preceding or following frames.",
+            "This provides a practical baseline for continued improvement without requiring a new architecture first. A repeatable cycle of collecting representative user footage, annotating difficult cases, and retraining could extend this approach. With the training and deployment pipeline already in place, the company has more room to explore new models while managing research risk and cost, and a clearer path to integrating future architectures."
+          ]
         }
       ]
     },
