@@ -69,7 +69,7 @@
             "Data, not capacity: The results suggest that training data coverage was the main bottleneck in the cases studied, even with a lightweight model.",
             "Single-frame prediction: The examples show plausible estimates under occlusion or blur without using preceding or following frames.",
             "Lower-risk improvement: A repeatable data collection, annotation, and retraining cycle could improve accuracy without requiring a new architecture first.",
-            "Future-ready pipeline: The existing training and deployment workflow provides a foundation for integrating new models while managing research risk and cost."
+            "Transferable foundation: The data-driven approach could extend to other sports, animation, entertainment, and medical applications with domain-specific data and validation. The existing pipeline also supports future model integration while managing research risk and cost."
           ]
         },
         {
