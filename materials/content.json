@@ -44,16 +44,16 @@
       ],
       "metricGroups": [
         { "title": "Model performance", "metrics": [
-        { "value": "≈ 80%", "label": "Previously difficult examples resolved" },
-        { "value": "≈ YOLO nano", "label": "Inference speed" }
+        { "value": "80%", "label": "Previously difficult examples resolved" },
+        { "value": "YOLO nano", "label": "Inference speed" }
         ] },
         { "title": "Annotation outcomes", "metrics": [
-        { "value": "≈ 67%", "label": "Annotation workload reduction" },
-        { "value": "≈ 3×", "label": "Labeling speed improvement" },
-        { "value": "≈ 480k", "label": "Joints annotated" },
-        { "value": "≈ 30k", "label": "Frames annotated" },
-        { "value": "≈ 2 weeks", "label": "Annotation time" },
-        { "value": "≈ US$3,000", "label": "Annotation cost" }
+        { "value": "67%", "label": "Annotation workload reduction" },
+        { "value": "3×", "label": "Labeling speed improvement" },
+        { "value": "480k", "label": "Joints annotated" },
+        { "value": "30k", "label": "Frames annotated" },
+        { "value": "2 weeks", "label": "Annotation time" },
+        { "value": "US$3,000", "label": "Annotation cost" }
         ] }
       ]
     },

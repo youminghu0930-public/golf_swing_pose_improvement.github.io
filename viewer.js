@@ -25,14 +25,15 @@ function playbackIcon(button, key) {
   const path = document.createElementNS(svg.namespaceURI, 'path');
   path.setAttribute('d', paths[key]); svg.append(path); button.replaceChildren(svg);
 }
-async function readJSON(url, signal, cache = 'default') {
-  const response = await fetch(url, { signal, cache });
+async function readJSON(url, signal, cache = 'default', priority = 'auto') {
+  const response = await fetch(url, { signal, cache, priority });
   if (!response.ok) throw new Error(`${url}: ${response.status}`);
   return response.json();
 }
 
-export async function mountViewer(root, copy) {
+export async function mountViewer(root, copy, { priorityReady } = {}) {
   const catalog = await readCatalog();
+  let backgroundReady = !priorityReady;
   copy = { ...copy, ...comparisonLabels(copy, catalog.models) };
   const player = make('div', undefined, 'comparison-player');
   player.tabIndex = 0;
@@ -81,6 +82,10 @@ export async function mountViewer(root, copy) {
   video.playsInline = true;
   video.setAttribute('playsinline', '');
   video.preload = 'metadata';
+  priorityReady?.then(() => {
+    backgroundReady = true;
+    video.preload = 'auto';
+  });
   // Keep a rendered decoder surface: display:none can suppress paused frame
   // presentation callbacks and leave drawImage reading the previous texture.
   video.className = 'video-decoder';
@@ -263,7 +268,7 @@ export async function mountViewer(root, copy) {
   });
   async function pose(url, signal) {
     if (poseCache.has(url)) return poseCache.get(url);
-    const data = await readJSON(url, signal);
+    const data = await readJSON(url, signal, 'default', backgroundReady ? 'auto' : 'low');
     poseCache.set(url, data);
     if (poseCache.size > 8) poseCache.delete(poseCache.keys().next().value);
     return data;
@@ -297,21 +302,21 @@ export async function mountViewer(root, copy) {
       const loaded = () => {
         if (video.readyState < 2) return;
         if (unlockPlayback) video.pause();
-        video.preload = 'metadata'; cleanup(); resolve();
+        video.preload = backgroundReady ? 'auto' : 'metadata'; cleanup(); resolve();
       };
       const failed = () => { cleanup(); reject(new Error('Video could not load')); };
       const aborted = () => { cleanup(); reject(new DOMException('Aborted', 'AbortError')); };
       // Some mobile browsers defer decoding until a direct user gesture.
       loadButton.onclick = () => {
-        unlockPlayback = true;
+        unlockPlayback = true; backgroundReady = true; video.preload = 'auto';
         video.play().then(loaded).catch(error => { console.warn('Tap-to-load playback was blocked', error); });
       };
       video.addEventListener('loadeddata', loaded, { once: true });
       video.addEventListener('canplay', loaded);
       video.addEventListener('error', failed, { once: true });
       signal.addEventListener('abort', aborted, { once: true });
-      // Fetch enough to present the first frame reliably, then stop aggressive preloading.
-      video.preload = 'auto'; video.src = url; video.load();
+      // Buffer the selected clip in the background; never preload the full list.
+      video.preload = backgroundReady ? 'auto' : 'metadata'; video.src = url; video.load();
     }); }
     const mediaReady = (async () => {
       await loadVideo(clip.video);

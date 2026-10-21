@@ -14,7 +14,12 @@ export function prepareBanner(root, clips, settings) {
   const hash = createHash('sha256').update(fs.readFileSync(source)).update(fs.readFileSync(poseSource))
     .update('banner-480-crf30-v2').digest('hex').slice(0, 12);
   const base = `materials/data/.generated/banner-${clip.key}-${hash}`;
-  const video = `${base}.mp4`, pose = `${base}.json`;
+  const video = `${base}.mp4`, pose = `${base}.json`, poster = `${base}-first.webp`;
+  const data = JSON.parse(fs.readFileSync(poseSource, 'utf8'));
+  if (!fs.existsSync(path.join(root, poster))) {
+    execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', source, '-vf', 'scale=480:-2',
+      '-frames:v', '1', '-c:v', 'libwebp', '-quality', '82', path.join(root, poster)]);
+  }
   if (!fs.existsSync(path.join(root, video))) {
     const temporary = path.join(root, `${base}.tmp.mp4`);
     execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', source, '-map', '0:v:0', '-an',
@@ -23,8 +28,7 @@ export function prepareBanner(root, clips, settings) {
     fs.renameSync(temporary, path.join(root, video));
   }
   if (!fs.existsSync(path.join(root, pose))) {
-    const data = JSON.parse(fs.readFileSync(poseSource, 'utf8'));
     fs.writeFileSync(path.join(root, pose), JSON.stringify({ joints: data.joints, pred: data.pred.slice(0, clip.frameCount) }));
   }
-  return { key: clip.key, video, pose };
+  return { key: clip.key, video, pose, poster, previewPose: { joints: data.joints, pred: [data.pred[0]] } };
 }

@@ -41,6 +41,8 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; }
 .hero-banner { position: relative; height: clamp(280px, 34vw, 420px); margin-top: 34px; overflow: hidden; border: 1px solid var(--viewer-border); border-radius: 16px; background: #eaf1e7; }
 .hero-banner[hidden] { display: none; }
 .banner-viewport { position: absolute; inset: 0; overflow: hidden; }
+.banner-poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.banner-poster[hidden] { display: none; }
 .banner-video { display: block; width: 100%; height: 100%; object-fit: contain; }
 .banner-badge { position: absolute; top: 18px; left: 20px; margin: 0; padding: 7px 11px; border: 1px solid #becfb9; border-radius: 30px; color: var(--accent); background: #f4f7f0ed; font-size: 11px; letter-spacing: .03em; }
 .banner-toggle { position: absolute; right: 16px; top: 16px; display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid var(--viewer-border); border-radius: 50%; background: var(--viewer-card); color: var(--accent); cursor: pointer; }

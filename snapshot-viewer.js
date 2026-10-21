@@ -359,5 +359,8 @@ export async function mountSnapshots(root, copy) {
   const resize = new ResizeObserver(resizeLayout); resize.observe(stage); cards.forEach(card => resize.observe(card));
   updateSelection(); resizeLayout();
   await loaders[0](true);
+  // Warm the remaining curated frames offscreen before handing bandwidth to video.
+  // Sequential requests avoid a burst that competes with the selected snapshot.
+  for (let index = 1; index < loaders.length; index++) await loaders[index](false);
 }
 import { readCatalog } from './catalog.js';

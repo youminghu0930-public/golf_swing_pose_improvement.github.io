@@ -27,9 +27,11 @@ export async function mountBanner(root, settings, copy) {
   const video=make('video','banner-video');
   video.muted=true; video.defaultMuted=true; video.setAttribute('muted','');
   video.playsInline=true; video.setAttribute('playsinline','');
-  video.loop=true; video.preload='metadata'; video.poster=clip.thumbnail;
+  video.loop=true; video.preload='auto'; video.poster=asset?.poster??clip.thumbnail;
   video.setAttribute('aria-hidden','true'); video.tabIndex=-1;
-  viewport.append(video);
+  const poster=make('img','banner-poster');
+  poster.src=video.poster; poster.alt=''; poster.fetchPriority='high'; poster.decoding='async';
+  viewport.append(video,poster);
   const overlay=createPoseOverlay(viewport,1,copy,new Set(),()=>{},{interactive:false});
   const fitOverlay=()=>{
     const contain=Math.min(viewport.clientWidth/clip.width,viewport.clientHeight/clip.height);
@@ -38,10 +40,12 @@ export async function mountBanner(root, settings, copy) {
   };
   const resize=new ResizeObserver(fitOverlay);resize.observe(viewport);
   const badge=make('p','banner-badge'); badge.textContent=settings.label;
-  const credit=make('div','banner-credit');
-  root.replaceChildren(viewport,badge,credit);
+  root.replaceChildren(viewport,badge);
+  if(asset?.previewPose) {
+    overlay.setPose(asset.previewPose,clip.width,clip.height); fitOverlay(); overlay.render(0);
+  }
   let callback, visible=false, loaded=false, wanted=!matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const draw=time=>overlay.render(bannerFrameAt(clip.times,time));
+  const draw=time=>overlay.render(loaded?bannerFrameAt(clip.times,time):0);
   const cancel=()=>{
     if(callback!==undefined) {
       if(video.requestVideoFrameCallback) video.cancelVideoFrameCallback(callback);
@@ -51,6 +55,7 @@ export async function mountBanner(root, settings, copy) {
   };
   const tick=(now,metadata)=>{
     callback=undefined;
+    poster.hidden=true;
     draw(metadata?.mediaTime??video.currentTime);
     if(!video.paused) schedule();
   };
@@ -66,19 +71,9 @@ export async function mountBanner(root, settings, copy) {
   video.addEventListener('pause',cancel);
   video.addEventListener('seeked',()=>{if(loaded)draw(video.currentTime);});
   video.addEventListener('loadeddata',()=>{if(loaded)draw(video.currentTime);});
-  video.addEventListener('error',()=>{cancel(); root.hidden=true;});
+  video.addEventListener('error',()=>{cancel(); poster.hidden=false; draw(0);});
   document.addEventListener('visibilitychange',sync);
   const observer=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;sync();}); observer.observe(root);
-  read('materials/data/credits.json').then(credits=>{
-    const source=credits[clip.key]??credits[clip.id]??credits[clip.id.split('-')[0]];
-    if(!source)return;
-    try {
-      const url=new URL(typeof source==='string'?source:source.url);
-      if(!['http:','https:'].includes(url.protocol))return;
-      const link=make('a'); link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';
-      link.textContent=`${copy.creditLabel} ${copy.creditLink}`; credit.append(link);
-    }catch { /* Attribution must not block the banner. */ }
-  }).catch(()=>{});
   // Do not download video/poses when opening directly at a lower section.
   await new Promise(resolve=>{
     const visibility=new IntersectionObserver(entries=>{
@@ -86,7 +81,12 @@ export async function mountBanner(root, settings, copy) {
     });
     visibility.observe(root);
   });
-  const pose=await read(asset?.pose??clip.poses.after);
+  // Preview and skeleton are already present; fetch motion and poses together.
+  // Retain that preview on slow networks, autoplay denial, and reduced motion.
+  if (!wanted) return;
+  const poseReady=read(asset?.pose??clip.poses.after);
+  video.src=asset?.video??clip.video; video.load();
+  const pose=await poseReady;
   overlay.setPose(pose,clip.width,clip.height);fitOverlay(); loaded=true;
-  video.src=asset?.video??clip.video;video.load();draw(0);sync();
+  draw(0);sync();
 }
