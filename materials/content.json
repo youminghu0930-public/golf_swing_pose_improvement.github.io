@@ -14,7 +14,7 @@
       "play": "Play banner",
       "pause": "Pause banner"
     },
-    "mainPage": { "label": "Return to main page", "url": "" },
+    "mainPage": { "label": "Return to main page", "url": "https://you-ming-hu.github.io/" },
     "footer": "Golf swing pose estimation"
   },
   "sections": [
