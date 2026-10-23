@@ -114,6 +114,10 @@ dd { font-size: clamp(22px, 2.5vw, 30px); letter-spacing: -.04em; margin: 0; }
 .snapshot-callout { position: absolute; margin: 0; padding: 9px 10px; border: 1px solid var(--model-accent-edge); border-radius: 6px; background: #f4f7f0f5; color: #253c37; font-size: 12px; line-height: 1.45; box-shadow: 0 2px 8px #203b3214; overflow-wrap: anywhere; }
 .snapshot-callout-rail.is-external { position: static; display: grid; gap: 8px; padding: 10px; background: var(--viewer-card); }
 .snapshot-callout { background: var(--viewer-card); }
+.snapshot-callout { display: grid; grid-template-columns: 1.3em minmax(0, 1fr); align-items: start; column-gap: .4em; }
+.callout-status { width: 1.3em; height: 1.3em; margin-top: .075em; fill: none; stroke: #dc2626; stroke-width: 3.5; stroke-linecap: round; }
+.comparison-panel[data-model=golf] .callout-status { stroke: #15803d; }
+.callout-message { min-width: 0; }
 .snapshot-callout-rail.is-external .snapshot-callout { position: static; width: 100% !important; box-shadow: none; font-size: 11px; }
 .snapshot-callout-arrows { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .snapshot-callout-arrows path { fill: none; stroke: #fff5c4; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }

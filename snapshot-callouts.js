@@ -72,7 +72,15 @@ export function createSnapshotCallouts(viewport, panel, entry, side) {
   viewport.append(arrows);
   const rail = document.createElement('div'); rail.className='snapshot-callout-rail'; panel.append(rail);
   const items = [...groups].map(([text,names])=>{
-    const box = document.createElement('p'); box.className='snapshot-callout'; box.textContent=text; rail.append(box);
+    const box = document.createElement('p'); box.className='snapshot-callout';
+    const icon = document.createElementNS(ns,'svg');
+    icon.classList.add('callout-status'); icon.setAttribute('viewBox','0 0 24 24'); icon.setAttribute('aria-hidden','true');
+    const mark = document.createElementNS(ns,side==='before'?'path':'circle');
+    if(side==='before') mark.setAttribute('d','M6 6 18 18M18 6 6 18');
+    else { mark.setAttribute('cx','12'); mark.setAttribute('cy','12'); mark.setAttribute('r','8'); }
+    icon.append(mark);
+    const message = document.createElement('span'); message.className='callout-message'; message.textContent=text;
+    box.append(icon,message); rail.append(box);
     return {box,names};
   });
   return state => {
@@ -90,7 +98,7 @@ export function createSnapshotCallouts(viewport, panel, entry, side) {
     const occupied=[];
     items.forEach(({box,names},index)=>{
       const targets=spotlightPoints(pose,names).map(project);
-      box.style.width=`${external?width:Math.min(164,width*.45)}px`;
+      box.style.width=`${external?width:Math.min(220,width*.6)}px`;
       const measured={width:box.offsetWidth,height:box.offsetHeight};
       let placement;
       if (external) {
