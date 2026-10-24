@@ -184,7 +184,7 @@ export async function mountSnapshots(root, copy, {warmAfter=Promise.resolve(),on
       images.forEach(image => { image.fetchPriority = active ? 'high' : 'low'; });
       if (loading) return loading;
       loading = (async () => {
-        images.forEach(image => { image.src = entry.image??`materials/data/snapshot/${entry.view}/${entry.id}/${entry.frame}.jpg`; });
+        images.forEach(image => { image.src = entry.image??`materials/data/snapshots/${entry.view}/${entry.id}/${entry.frame}.jpg`; });
         // Stale catalogs/new manual selections only: load full poses for this card on demand.
         await Promise.all(['before', 'after'].map(async side => {
           if (entry[side]) return;

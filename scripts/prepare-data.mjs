@@ -75,7 +75,7 @@ export function prepareData(root = projectRoot, { probe = probeVideo, preview = 
       for (const { clip, frame } of snapshotItems(read(configFile), clips, { onWarning: warn })) {
         const hash = cache[clip.video].hash;
         try {
-          const folder = `materials/data/snapshot/${clip.view}/${clip.id}`;
+          const folder = `materials/data/snapshots/${clip.view}/${clip.id}`;
           fs.mkdirSync(path.join(root,folder), {recursive:true});
           const existing=fs.readdirSync(path.join(root,folder)).find(name=>new RegExp(`^${frame}\\.(jpe?g|png|webp)$`,'i').test(name));
           const sourceImage=`${folder}/${existing??`${frame}.jpg`}`;

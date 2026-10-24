@@ -28,8 +28,8 @@ test('catalog reflects actual files, preserves hyphens, and drops deleted/incomp
     assert.equal(first.clips[0].frameCount, 2);
     assert.equal(first.snapshots.length, 1);
     assert.match(first.snapshots[0].image, /0019-1-frame-1-[a-f0-9]{12}-[a-f0-9]{12}-q82\.webp$/);
-    assert.ok(fs.existsSync(path.join(root,'materials/data/snapshot/down-the-line/0019-1/1.jpg')));
-    write('materials/data/snapshot/down-the-line/0019-1/1.jpg','updated manually extracted image');
+    assert.ok(fs.existsSync(path.join(root,'materials/data/snapshots/down-the-line/0019-1/1.jpg')));
+    write('materials/data/snapshots/down-the-line/0019-1/1.jpg','updated manually extracted image');
     assert.notEqual(prepareData(root,options).snapshots[0].image,first.snapshots[0].image);
     assert.deepEqual(first.snapshots[0].before, { joints: ['nose'], pred: [[[3, 4]]] });
     assert.deepEqual(first.snapshots[0].after, { joints: ['nose'], pred: [[[3, 4]]] });
