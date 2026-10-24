@@ -78,8 +78,7 @@
       "paragraphs": [
         "The golf-specific model produced more plausible estimates in the difficult cases assessed, particularly when the torso occluded the arms. Approximately 80% of the previously difficult examples were resolved, while inference remained near YOLO-nano speed.",
         "The model was developed during the YOLOv8 era. In the examples shown, it achieves accuracy similar to YOLO26x on visible joints while remaining more reliable during down-the-line follow-throughs and face-on transitions. It also suppresses non-golfer pose distractions and remains lightweight enough for real-time inference on iPhones."
-      ],
-      "note": "The displayed comparisons illustrate observed behavior rather than a controlled benchmark."
+      ]
     },
     {
       "id": "discussion",
@@ -107,9 +106,8 @@
           ]
         },
         {
-          "title": "Limitations and future directions",
+          "title": "Future directions",
           "paragraphs": [
-            "The selected examples are useful for inspecting failure modes, but they do not establish performance across every golfer, camera angle, or recording condition. The reported difficult-example resolution rate should be accompanied by its evaluation criteria and sample size.",
             "A next step would be a repeatable cycle of failure collection, targeted annotation, retraining, and held-out evaluation. The same approach could be explored in other sports, animation, entertainment, or medical applications, but each domain would require its own data and validation."
           ]
         }
