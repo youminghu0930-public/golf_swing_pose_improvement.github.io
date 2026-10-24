@@ -19,28 +19,11 @@
   },
   "sections": [
     {
-      "id": "goal",
-      "title": "Goal",
+      "id": "abstract",
+      "title": "Abstract",
+      "snapshots": true,
       "paragraphs": [
-        "General-purpose pose estimation can struggle with the unusual postures and joint occlusions found in golf swings. This project aimed to improve estimation reliability in these challenging positions while keeping the model lightweight enough for real-time use on mobile devices."
-      ]
-    },
-    {
-      "id": "difficulty",
-      "title": "Challenges",
-      "paragraphs": [
-        "We suspected that underrepresentation of golf-specific poses in the training data contributed to these failures. Expanding the dataset was our starting point, but annotation itself became a major bottleneck.",
-        "Hundreds of videos, each containing hundreds of frames, made exhaustive annotation impractical in terms of time and cost. We needed to prioritize useful footage and make labeling more efficient while maintaining consistent joint definitions."
-      ]
-    },
-    {
-      "id": "accomplishment",
-      "title": "Contributions and Outcomes",
-      "items": [
-        "Model quality: Developed during the YOLOv8 era, our model resolves approximately 80% of previously difficult examples at near-YOLO-nano inference speed. In the examples below, it is comparable to YOLO26x on visible joints and more reliable under arm occlusion during down-the-line follow-throughs and face-on transitions, while ignoring non-golfer distractions.",
-        "Mobile deployment: I built a training, Core ML conversion, and quantization pipeline for real-time inference on iPhones, then collaborated with the iOS team to deploy the model in the product.",
-        "Annotation efficiency: I worked with the team to define video selection criteria that reduced the workload by approximately two-thirds. My labeling guidance and refined joint definitions reduced ambiguity and increased labeling speed to approximately 3× its previous rate.",
-        "Dataset delivery: I managed an outsourced team of around 10 people to annotate approximately 480,000 joints across 30,000 frames in about two weeks, at a cost of around US$3,000."
+        "Golf-specific postures and arm occlusions exposed weaknesses in general-purpose pose estimation. I led a targeted annotation effort that reduced labeling workload by approximately two-thirds and increased labeling speed by approximately 3×, delivering 30,000 annotated frames in two weeks for around US$3,000. The resulting lightweight model resolved approximately 80% of the previously difficult examples assessed, suggesting that better data coverage could improve accuracy without a larger architecture."
       ],
       "metricGroups": [
         { "title": "Model performance", "metrics": [
@@ -58,47 +41,89 @@
       ]
     },
     {
-      "id": "influence",
-      "title": "Lasting Impact",
-      
+      "id": "introduction",
+      "title": "Introduction",
+      "paragraphs": [
+        "General-purpose pose models can perform well on everyday movements yet struggle with golf swings. Unusual joint configurations, rapid motion, and arms occluded by the torso can produce anatomically implausible predictions at positions important to swing analysis.",
+        "We suspected that insufficient coverage of these poses in the training data was a major contributor. However, exhaustively labeling hundreds of videos, each containing hundreds of frames, was impractical under the available time and budget.",
+        "The central question was: Could targeted data selection and a more efficient annotation process improve difficult-pose estimation while retaining a lightweight model?"
+      ]
+    },
+    {
+      "id": "methods",
+      "title": "Methods",
       "subsections": [
         {
-          "title": "Research value",
-          "paragraphs": ["The project offers practical insights into improving pose estimation and guiding future model development:"],
-          "items": [
-            "Data, not capacity: The results suggest that training data coverage was the main bottleneck in the cases studied, even with a lightweight model.",
-            "Single-frame prediction: The examples show plausible estimates under occlusion or blur without using preceding or following frames.",
-            "Lower-risk improvement: A repeatable data collection, annotation, and retraining cycle could improve accuracy without requiring a new architecture first.",
-            "Transferable foundation: The data-driven approach could extend to other sports, animation, entertainment, and medical applications with domain-specific data and validation. The existing pipeline also supports future model iteration while managing research risk and cost."
-          ]
+          "title": "Prioritize useful footage",
+          "paragraphs": ["The first challenge was controlling annotation volume. I worked with the team to define more objective video-selection criteria, focusing the effort on footage relevant to the observed prediction failures. This reduced the annotation workload by approximately two-thirds."]
         },
         {
-          "title": "Production engineering",
-          "paragraphs": ["For production, I created and delivered:"],
-          "items": [
-            "Cross-functional integration work with the iOS team to deploy the Core ML model in the product.",
-            "A reusable workflow for model training, inference, and Core ML conversion.",
-            "A standardized data pipeline to merge existing and newly annotated datasets for model training."
-          ]
+          "title": "Make joint definitions actionable",
+          "paragraphs": ["Annotators needed to make consistent decisions in ambiguous or occluded poses. I refined several joint definitions and documented their rationale, alongside practical labeling techniques. These changes reduced ambiguity and helped increase labeling speed to approximately 3× its previous rate."]
         },
         {
-          "title": "Reusable annotation workflow",
+          "title": "Coordinate annotation delivery",
+          "paragraphs": ["I managed an outsourced annotation team of around 10 people, using the internal management tool to coordinate the work. The team delivered approximately 480,000 joint annotations across 30,000 frames in about two weeks, at a cost of around US$3,000."]
+        },
+        {
+          "title": "Connect annotation to model iteration",
+          "paragraphs": ["I established a data-preparation pipeline to combine existing and newly annotated datasets, followed by model training, inference, Core ML conversion, and quantization. Working with the iOS team, I carried the resulting model through to deployment on iPhones."]
+        }
+      ],
+      "note": "Proprietary selection criteria, training settings, and internal tooling details are omitted."
+    },
+    {
+      "id": "result",
+      "title": "Results",
+      "paragraphs": [
+        "The golf-specific model produced more plausible estimates in the difficult cases assessed, particularly when the torso occluded the arms. Approximately 80% of the previously difficult examples were resolved, while inference remained near YOLO-nano speed.",
+        "The model was developed during the YOLOv8 era. In the examples shown, it achieves accuracy similar to YOLO26x on visible joints while remaining more reliable during down-the-line follow-throughs and face-on transitions. It also suppresses non-golfer pose distractions and remains lightweight enough for real-time inference on iPhones."
+      ],
+      "note": "The displayed comparisons illustrate observed behavior rather than a controlled benchmark."
+    },
+    {
+      "id": "discussion",
+      "title": "Discussion",
+      "subsections": [
+        {
+          "title": "Data coverage was a practical bottleneck",
           "paragraphs": [
-            "I created tools and documented the workflows, joint definitions, and lessons learned so future annotation teams could build on this experience rather than solve the same problems again. The documentation covers:"
-          ],
-          "items": [
-            "Practical labeling techniques for faster, more consistent annotation.",
-            "The reasoning behind the joint definitions and the benefits of each choice.",
-            "Using the internal management tool to coordinate an outsourced annotation team more efficiently."
+            "The results support the hypothesis that insufficient training-data coverage contributed substantially to the observed failures. A lightweight model could learn more plausible predictions for difficult golf poses after targeted dataset expansion, without requiring a larger architecture.",
+            "The examples also show plausible predictions under occlusion or blur using individual frames, without information from preceding or following frames. This suggests that useful visual cues remained available even when individual joints were difficult to see directly."
+          ]
+        },
+        {
+          "title": "Annotation efficiency enabled model improvement",
+          "paragraphs": [
+            "The contribution was not simply adding more labels. Reducing unnecessary work, clarifying annotation decisions, and improving labeling speed made dataset expansion feasible within the available constraints.",
+            "The model outcome and annotation process should therefore be evaluated together: prediction quality was the final objective, while annotation efficiency made that improvement achievable."
+          ]
+        },
+        {
+          "title": "A repeatable path from data to deployment",
+          "paragraphs": [
+            "From an MLOps perspective, the project established a reusable path from dataset preparation through training and mobile deployment. Documented joint definitions and annotation workflows also gave later annotation rounds a starting point.",
+            "This foundation supports future model iterations with less repeated setup work. Further automation of dataset checks, evaluation, and deployment verification would strengthen the process."
+          ]
+        },
+        {
+          "title": "Limitations and future directions",
+          "paragraphs": [
+            "The selected examples are useful for inspecting failure modes, but they do not establish performance across every golfer, camera angle, or recording condition. The reported difficult-example resolution rate should be accompanied by its evaluation criteria and sample size.",
+            "A next step would be a repeatable cycle of failure collection, targeted annotation, retraining, and held-out evaluation. The same approach could be explored in other sports, animation, entertainment, or medical applications, but each domain would require its own data and validation."
           ]
         }
       ]
     },
     {
-      "id": "result",
-      "title": "Results",
-      "paragraphs": [],
-      "demo": {
+      "id": "conclusion",
+      "title": "Conclusion",
+      "paragraphs": [
+        "Targeted annotation improved difficult golf-pose estimation while preserving a lightweight, real-time model. By reducing annotation volume and making labeling faster and less ambiguous, I helped turn a costly dataset-expansion problem into a feasible model-improvement cycle. The resulting workflow provides a foundation for continued data-driven iteration."
+      ]
+    }
+  ],
+  "demo": {
         "before": "General-purpose model",
         "after": "Golf-specific model",
         "modelTag": "{label} · {model}",
@@ -175,6 +200,4 @@
           "right_ankle": "Right ankle"
         }
       }
-    }
-  ]
 }

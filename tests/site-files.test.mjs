@@ -9,7 +9,7 @@ test('deployment includes referenced materials/data files without recursively pu
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'golf-site-files-'));
   const write = file => { const target = path.join(root, file); fs.mkdirSync(path.dirname(target), { recursive: true }); fs.writeFileSync(target, 'fixture'); };
   try {
-    for (const file of ['main.js', 'materials/content.json', 'materials/data/credits.json', 'materials/data/poses/snapshot.json',
+    for (const file of ['main.js', 'materials/content.json', 'materials/data/credits.json', 'materials/data/snapshot.json',
       'materials/data/vidoes/view/unused.mp4', 'materials/data/.generated/old.jpg', 'materials/data/.generated/probe-cache.json']) write(file);
     const clip = { video: 'materials/data/.generated/videos/used.mp4', thumbnail: 'materials/data/.generated/used.jpg',
       poses: { before: 'materials/data/poses/yolo26x/view/used.json', after: 'materials/data/poses/golf_specific/view/used.json' } };
@@ -20,7 +20,7 @@ test('deployment includes referenced materials/data files without recursively pu
     assert.ok(files.has(banner.pose));
     assert.ok(files.has(banner.poster));
     for (const file of ['main.js', 'materials/content.json', 'materials/data/catalog.json', clip.video, clip.thumbnail,
-      ...Object.values(clip.poses), snapshot.image, 'materials/data/credits.json', 'materials/data/poses/snapshot.json']) assert.ok(files.has(file), file);
+      ...Object.values(clip.poses), snapshot.image, 'materials/data/credits.json', 'materials/data/snapshot.json']) assert.ok(files.has(file), file);
     for (const file of ['materials/data/vidoes/view/unused.mp4', 'materials/data/.generated/old.jpg', 'materials/data/.generated/probe-cache.json']) assert.equal(files.has(file), false, file);
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });

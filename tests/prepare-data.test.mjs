@@ -18,7 +18,7 @@ test('catalog reflects actual files, preserves hyphens, and drops deleted/incomp
     write('materials/data/vidoes/down-the-line/0019-1.MP4');
     write('materials/data/vidoes/down-the-line/incomplete.mp4');
     for (const side of ['yolo26x', 'golf_specific']) write(`materials/data/poses/${side}/down-the-line/0019-1.json`, JSON.stringify({ joints: ['nose'], pred: [[[1, 2]], [[3, 4]]] }));
-    write('materials/data/poses/snapshot.json', JSON.stringify({ '0019-1': { 1: ['nose'], 100: ['nose'] }, removed: { 0: ['nose'] } }));
+    write('materials/data/snapshot.json', JSON.stringify({ '0019-1': { 1: ['nose'], 100: ['nose'] }, removed: { 0: ['nose'] } }));
     const first = prepareData(root, options);
     assert.equal(first.clips.length, 1);
     assert.equal(first.clips[0].id, '0019-1');
@@ -27,7 +27,10 @@ test('catalog reflects actual files, preserves hyphens, and drops deleted/incomp
     assert.equal(first.clips[0].poses.after, 'materials/data/poses/golf_specific/down-the-line/0019-1.json');
     assert.equal(first.clips[0].frameCount, 2);
     assert.equal(first.snapshots.length, 1);
-    assert.match(first.snapshots[0].image, /0019-1-frame-1-[a-f0-9]{12}-q82\.webp$/);
+    assert.match(first.snapshots[0].image, /0019-1-frame-1-[a-f0-9]{12}-[a-f0-9]{12}-q82\.webp$/);
+    assert.ok(fs.existsSync(path.join(root,'materials/data/snapshot/down-the-line/0019-1/1.jpg')));
+    write('materials/data/snapshot/down-the-line/0019-1/1.jpg','updated manually extracted image');
+    assert.notEqual(prepareData(root,options).snapshots[0].image,first.snapshots[0].image);
     assert.deepEqual(first.snapshots[0].before, { joints: ['nose'], pred: [[[3, 4]]] });
     assert.deepEqual(first.snapshots[0].after, { joints: ['nose'], pred: [[[3, 4]]] });
     assert.equal(JSON.parse(fs.readFileSync(path.join(root, first.clips[0].poses.before))).pred.length, 2);

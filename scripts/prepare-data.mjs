@@ -68,14 +68,21 @@ export function prepareData(root = projectRoot, { probe = probeVideo, preview = 
   }
   const snapshots = [];
   const snapshotPoses = new Map();
-  const configFile = path.join(root, 'materials/data/poses/snapshot.json');
+  const currentConfig = path.join(root, 'materials/data/snapshot.json');
+  const configFile = fs.existsSync(currentConfig) ? currentConfig : path.join(root, 'materials/data/poses/snapshot.json');
   if (fs.existsSync(configFile)) {
     try {
       for (const { clip, frame } of snapshotItems(read(configFile), clips, { onWarning: warn })) {
         const hash = cache[clip.video].hash;
-        const image = `materials/data/.generated/${clip.key}-frame-${frame}-${hash}-q${options.snapshotWebpQuality}.webp`;
         try {
-          if (!fs.existsSync(path.join(root, image))) preview(path.join(root, clip.video), path.join(root, image), frame, options.snapshotWebpQuality);
+          const folder = `materials/data/snapshot/${clip.view}/${clip.id}`;
+          fs.mkdirSync(path.join(root,folder), {recursive:true});
+          const existing=fs.readdirSync(path.join(root,folder)).find(name=>new RegExp(`^${frame}\\.(jpe?g|png|webp)$`,'i').test(name));
+          const sourceImage=`${folder}/${existing??`${frame}.jpg`}`;
+          ensurePreview(path.join(root,clip.video),path.join(root,sourceImage),frame);
+          const imageHash=createHash('sha256').update(fs.readFileSync(path.join(root,sourceImage))).digest('hex').slice(0,12);
+          const image = `materials/data/.generated/${clip.key}-frame-${frame}-${hash}-${imageHash}-q${options.snapshotWebpQuality}.webp`;
+          if (!fs.existsSync(path.join(root, image))) preview(path.join(root, sourceImage), path.join(root, image), 0, options.snapshotWebpQuality);
           const snapshot = { key: `${clip.key}-${frame}`, image };
           for (const side of ['before', 'after']) {
             const file = clip.poses[side];
@@ -109,7 +116,7 @@ function probeVideo(file) {
 
 function makePreview(source, destination, frame, quality = 82) {
   const filter = frame === null ? 'scale=192:192:force_original_aspect_ratio=decrease' : `select=eq(n\\,${frame})`;
-  const codec = frame === null ? ['-q:v', '5'] : ['-c:v', 'libwebp', '-quality', String(quality), '-compression_level', '6'];
+  const codec = frame === null ? ['-q:v', '5'] : /\.webp$/i.test(destination) ? ['-c:v', 'libwebp', '-quality', String(quality), '-compression_level', '6'] : ['-q:v','2'];
   execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', source, '-vf', filter, '-frames:v', '1', ...codec, destination]);
 }
 
